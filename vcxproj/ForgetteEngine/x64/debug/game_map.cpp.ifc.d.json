@@ -1,0 +1,23 @@
+{
+    "Version": "1.2",
+    "Data": {
+        "Source": "d:\\silmech\\workspaces\\forgette\\release\\source\\game_map.cpp",
+        "ProvidedModule": "game_map",
+        "Includes": [],
+        "ImportedModules": [
+            {
+                "Name": "core",
+                "BMI": "D:\\silmech\\workspaces\\forgette\\release\\vcxproj\\ForgetteEngine\\x64\\debug\\core.cpp.ifc"
+            },
+            {
+                "Name": "std",
+                "BMI": "D:\\silmech\\workspaces\\forgette\\release\\vcxproj\\ForgetteEngine\\x64\\debug\\microsoft\\STL\\std.ixx.ifc"
+            },
+            {
+                "Name": "entity",
+                "BMI": "D:\\silmech\\workspaces\\forgette\\release\\vcxproj\\ForgetteEngine\\x64\\debug\\entity.cpp.ifc"
+            }
+        ],
+        "ImportedHeaderUnits": []
+    }
+}

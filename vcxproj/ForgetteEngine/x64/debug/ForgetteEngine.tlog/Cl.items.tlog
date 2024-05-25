@@ -1,0 +1,19 @@
+D:\silmech\workspaces\forgette\release\source\box_collision.cpp;D:\silmech\workspaces\forgette\release\vcxproj\ForgetteEngine\x64\debug\box_collision.obj
+D:\silmech\workspaces\forgette\release\source\camera_entity.cpp;D:\silmech\workspaces\forgette\release\vcxproj\ForgetteEngine\x64\debug\camera_entity.obj
+D:\silmech\workspaces\forgette\release\source\collision.cpp;D:\silmech\workspaces\forgette\release\vcxproj\ForgetteEngine\x64\debug\collision.obj
+D:\silmech\workspaces\forgette\release\source\core.cpp;D:\silmech\workspaces\forgette\release\vcxproj\ForgetteEngine\x64\debug\core.obj
+D:\silmech\workspaces\forgette\release\source\debug_entity.cpp;D:\silmech\workspaces\forgette\release\vcxproj\ForgetteEngine\x64\debug\debug_entity.obj
+D:\silmech\workspaces\forgette\release\source\debug_map.cpp;D:\silmech\workspaces\forgette\release\vcxproj\ForgetteEngine\x64\debug\debug_map.obj
+D:\silmech\workspaces\forgette\release\source\directx.cpp;D:\silmech\workspaces\forgette\release\vcxproj\ForgetteEngine\x64\debug\directx.obj
+D:\silmech\workspaces\forgette\release\source\entity.cpp;D:\silmech\workspaces\forgette\release\vcxproj\ForgetteEngine\x64\debug\entity.obj
+D:\silmech\workspaces\forgette\release\source\forgette.cpp;D:\silmech\workspaces\forgette\release\vcxproj\ForgetteEngine\x64\debug\forgette.obj
+D:\silmech\workspaces\forgette\release\source\game_map.cpp;D:\silmech\workspaces\forgette\release\vcxproj\ForgetteEngine\x64\debug\game_map.obj
+D:\silmech\workspaces\forgette\release\source\input.cpp;D:\silmech\workspaces\forgette\release\vcxproj\ForgetteEngine\x64\debug\input.obj
+D:\silmech\workspaces\forgette\release\source\main.cpp;D:\silmech\workspaces\forgette\release\vcxproj\ForgetteEngine\x64\debug\main.obj
+D:\silmech\workspaces\forgette\release\source\map_loader.cpp;D:\silmech\workspaces\forgette\release\vcxproj\ForgetteEngine\x64\debug\map_loader.obj
+D:\silmech\workspaces\forgette\release\source\sprite.cpp;D:\silmech\workspaces\forgette\release\vcxproj\ForgetteEngine\x64\debug\sprite.obj
+D:\silmech\workspaces\forgette\release\source\sprite_entity.cpp;D:\silmech\workspaces\forgette\release\vcxproj\ForgetteEngine\x64\debug\sprite_entity.obj
+D:\silmech\workspaces\forgette\release\source\timers.cpp;D:\silmech\workspaces\forgette\release\vcxproj\ForgetteEngine\x64\debug\timers.obj
+D:\silmech\workspaces\forgette\release\source\windows.cpp;D:\silmech\workspaces\forgette\release\vcxproj\ForgetteEngine\x64\debug\windows.obj
+C:\Program Files\Microsoft Visual Studio\2022\Community\VC\Tools\MSVC\14.38.33130\modules\std.ixx;D:\silmech\workspaces\forgette\release\vcxproj\ForgetteEngine\x64\debug\microsoft\STL\std.ixx.obj
+C:\Program Files\Microsoft Visual Studio\2022\Community\VC\Tools\MSVC\14.38.33130\modules\std.compat.ixx;D:\silmech\workspaces\forgette\release\vcxproj\ForgetteEngine\x64\debug\microsoft\STL\std.compat.ixx.obj

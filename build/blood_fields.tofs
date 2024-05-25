@@ -1,0 +1,3 @@
+print("loading blood_fields.tofs")
+
+spawn_debug_unit(0, 0)

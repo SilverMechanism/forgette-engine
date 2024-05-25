@@ -1,0 +1,27 @@
+{
+    "Version": "1.2",
+    "Data": {
+        "Source": "d:\\silmech\\workspaces\\forgette\\release\\source\\entity.cpp",
+        "ProvidedModule": "entity",
+        "Includes": [],
+        "ImportedModules": [
+            {
+                "Name": "core",
+                "BMI": "D:\\silmech\\workspaces\\forgette\\release\\vcxproj\\ForgetteEngine\\x64\\debug\\core.cpp.ifc"
+            },
+            {
+                "Name": "std",
+                "BMI": "D:\\silmech\\workspaces\\forgette\\release\\vcxproj\\ForgetteEngine\\x64\\debug\\microsoft\\STL\\std.ixx.ifc"
+            },
+            {
+                "Name": "directx",
+                "BMI": "D:\\silmech\\workspaces\\forgette\\release\\vcxproj\\ForgetteEngine\\x64\\debug\\directx.cpp.ifc"
+            },
+            {
+                "Name": "timers",
+                "BMI": "D:\\silmech\\workspaces\\forgette\\release\\vcxproj\\ForgetteEngine\\x64\\debug\\timers.cpp.ifc"
+            }
+        ],
+        "ImportedHeaderUnits": []
+    }
+}

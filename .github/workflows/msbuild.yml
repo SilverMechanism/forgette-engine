@@ -1,0 +1,22 @@
+name: Build vcxproj
+
+on:
+  push:
+    branches: [ master ]
+  pull_request:
+    branches: [ master ]
+
+jobs:
+  build:
+    runs-on: windows-latest
+
+    steps:
+    - uses: actions/checkout@v3
+
+    - name: Add MSBuild to PATH
+      uses: microsoft/setup-msbuild@v1.1
+
+    - name: Build ForgetteEngine.vcxproj
+      working-directory: vcxproj
+      run: |
+        msbuild ForgetteEngine.vcxproj /p:configuration=debug /p:platform=x64 /t:build /maxcpucount:8

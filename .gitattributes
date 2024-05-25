@@ -1,0 +1,3 @@
+source/modules/include/** linguist-vendored
+
+*.tofs linguist-language=Lua

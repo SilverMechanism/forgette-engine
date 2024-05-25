@@ -1,0 +1,59 @@
+{
+    "Version": "1.2",
+    "Data": {
+        "Source": "d:\\silmech\\workspaces\\forgette\\release\\source\\debug_map.cpp",
+        "ProvidedModule": "debug_map",
+        "Includes": [],
+        "ImportedModules": [
+            {
+                "Name": "core",
+                "BMI": "D:\\silmech\\workspaces\\forgette\\release\\vcxproj\\ForgetteEngine\\x64\\debug\\core.cpp.ifc"
+            },
+            {
+                "Name": "game_map",
+                "BMI": "D:\\silmech\\workspaces\\forgette\\release\\vcxproj\\ForgetteEngine\\x64\\debug\\game_map.cpp.ifc"
+            },
+            {
+                "Name": "forgette",
+                "BMI": "D:\\silmech\\workspaces\\forgette\\release\\vcxproj\\ForgetteEngine\\x64\\debug\\forgette.cpp.ifc"
+            },
+            {
+                "Name": "debug_entity",
+                "BMI": "D:\\silmech\\workspaces\\forgette\\release\\vcxproj\\ForgetteEngine\\x64\\debug\\debug_entity.cpp.ifc"
+            },
+            {
+                "Name": "std",
+                "BMI": "D:\\silmech\\workspaces\\forgette\\release\\vcxproj\\ForgetteEngine\\x64\\debug\\microsoft\\STL\\std.ixx.ifc"
+            },
+            {
+                "Name": "timers",
+                "BMI": "D:\\silmech\\workspaces\\forgette\\release\\vcxproj\\ForgetteEngine\\x64\\debug\\timers.cpp.ifc"
+            },
+            {
+                "Name": "entity",
+                "BMI": "D:\\silmech\\workspaces\\forgette\\release\\vcxproj\\ForgetteEngine\\x64\\debug\\entity.cpp.ifc"
+            },
+            {
+                "Name": "windows",
+                "BMI": "D:\\silmech\\workspaces\\forgette\\release\\vcxproj\\ForgetteEngine\\x64\\debug\\windows.cpp.ifc"
+            },
+            {
+                "Name": "sprite_entity",
+                "BMI": "D:\\silmech\\workspaces\\forgette\\release\\vcxproj\\ForgetteEngine\\x64\\debug\\sprite_entity.cpp.ifc"
+            },
+            {
+                "Name": "sprite",
+                "BMI": "D:\\silmech\\workspaces\\forgette\\release\\vcxproj\\ForgetteEngine\\x64\\debug\\sprite.cpp.ifc"
+            },
+            {
+                "Name": "box_collision",
+                "BMI": "D:\\silmech\\workspaces\\forgette\\release\\vcxproj\\ForgetteEngine\\x64\\debug\\box_collision.cpp.ifc"
+            },
+            {
+                "Name": "collision",
+                "BMI": "D:\\silmech\\workspaces\\forgette\\release\\vcxproj\\ForgetteEngine\\x64\\debug\\collision.cpp.ifc"
+            }
+        ],
+        "ImportedHeaderUnits": []
+    }
+}

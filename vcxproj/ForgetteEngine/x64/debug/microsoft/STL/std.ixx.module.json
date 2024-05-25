@@ -1,0 +1,22 @@
+{
+    "version": 1,
+    "revision": 0,
+    "rules": [
+        {
+            "primary-output": "ForgetteEngine\\x64\\debug\\microsoft/STL\\std.ixx.obj",
+            "outputs": [
+                "D:\\silmech\\workspaces\\forgette\\release\\vcxproj\\ForgetteEngine\\x64\\debug\\vc143.pdb",
+                "ForgetteEngine\\x64\\debug\\microsoft/STL\\",
+                "D:\\silmech\\workspaces\\forgette\\release\\vcxproj\\ForgetteEngine\\x64\\debug\\microsoft\\STL\\std.ixx.ifc"
+            ],
+            "provides": [
+                {
+                    "logical-name": "std",
+                    "source-path": "c:\\program files\\microsoft visual studio\\2022\\community\\vc\\tools\\msvc\\14.38.33130\\modules\\std.ixx",
+                    "is-interface": true
+                }
+            ],
+            "requires": []
+        }
+    ]
+}

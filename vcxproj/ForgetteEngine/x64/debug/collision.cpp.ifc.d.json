@@ -1,0 +1,10 @@
+{
+    "Version": "1.2",
+    "Data": {
+        "Source": "d:\\silmech\\workspaces\\forgette\\release\\source\\collision.cpp",
+        "ProvidedModule": "collision",
+        "Includes": [],
+        "ImportedModules": [],
+        "ImportedHeaderUnits": []
+    }
+}
