@@ -1,1 +1,6 @@
-source/modules/luajit/* linguist-vendored
+source/modules/include/luajit/* linguist-vendored
+source/modules/include/sqlite3/* linguist-vendored
+source/modules/include/sqlitecpp/* linguist-vendored
+
+source/modules/
+*.tofs linguist-language=Lua
