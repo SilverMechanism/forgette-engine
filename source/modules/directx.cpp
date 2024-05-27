@@ -147,24 +147,10 @@ namespace ForgetteDirectX
 		coordinates<float> resolution = get_resolution();
 		
 		float dx = (map_location.x - render_viewpoint.x);
-		float dy = (map_location.y - render_viewpoint.y); // We add instead of subtract because screen space goes down instead of up
+		float dy = (map_location.y - render_viewpoint.y);
 		
 		float x_on_window = ((resolution.x / 2) + dx);
 		float y_on_window = ((resolution.y / 2) - dy);
-		
-		if (default_projection == ProjectionMode::Ratio2_1)
-		{
-			coordinates<float> isometric_coords;
-			x_on_window = (map_location.x - map_location.y) * (dimensions.x/2)/36;
-			y_on_window = (map_location.x + map_location.y) * (dimensions.y/2)/36;
-		
-			/* coordinates<float> isometric_viewpoint;
-			isometric_viewpoint.x = (render_viewpoint.x - render_viewpoint.y)  * (dimensions.x/2);
-			isometric_viewpoint.y = (render_viewpoint.x + render_viewpoint.y) * (dimensions.y/2);
-			
-			dx = (isometric_coords.x - isometric_viewpoint.x - isometric_viewpoint.y + isometric_viewpoint.y) * 0.5f;
-        	dy = (isometric_coords.x - isometric_viewpoint.x + isometric_viewpoint.y - isometric_viewpoint.y) * 0.25f;*/
-		}
 		
 		if (x_on_window-dimensions.x > resolution.x || x_on_window+dimensions.x < 0)
 		{
@@ -176,22 +162,21 @@ namespace ForgetteDirectX
 			return;
 		}
 		
-		// std::cout << "X: " << x_on_window << std::endl << "Y: " << y_on_window << std::endl << std::endl;
-		
-		// std::println("{}", y_on_window);
-		
 		dimensions.y *= zoom_level;
 		dimensions.x *= zoom_level;
 		
 		coordinates<float> atlas_location_f = atlas_location;
 		coordinates<float> atlas_size_f = atlas_size;
 		
-		D2D1_RECT_F draw_rect = D2D1::RectF(x_on_window-(dimensions.x/2), y_on_window-dimensions.y, x_on_window+(dimensions.x/2), y_on_window);
-		D2D1_RECT_F atlas_rect = D2D1::RectF(atlas_location_f.x, atlas_location_f.y, atlas_location.x+atlas_size_f.x, atlas_location.y+atlas_size_f.y);
+		D2D1_RECT_F draw_rect = D2D1::RectF(
+			x_on_window-(dimensions.x/2), y_on_window-dimensions.y, 
+			x_on_window+(dimensions.x/2), y_on_window
+		);
 		
-		// std::cout << "Sprite map location: " << std::string(map_location) << "\nRV Map Location: " << std::string(render_viewpoint) << "\nDistance from viewpoint: (" << dx << ", " << dy << ")\n";
-		// std::cout << "Sprite position on window: (" << x_on_window << ", " << y_on_window << ")\n";
-		// std::cout << std::endl << std::endl;
+		D2D1_RECT_F atlas_rect = D2D1::RectF(
+			atlas_location_f.x, atlas_location_f.y, atlas_location.x+atlas_size_f.x, 
+			atlas_location.y+atlas_size_f.y
+		);
 		
 		d2d1_render_target->DrawBitmap(
 			bitmap,
@@ -206,20 +191,10 @@ namespace ForgetteDirectX
 		coordinates<float> resolution = get_resolution();
 		
 		float dx = (map_location.x - render_viewpoint.x);
-		float dy = (map_location.y - render_viewpoint.y); // We add instead of subtract because screen space goes down instead of up
+		float dy = (map_location.y - render_viewpoint.y);
 		
 		float x_on_window = ((resolution.x / 2) + dx);
 		float y_on_window = ((resolution.y / 2) - dy);
-		
-		if (default_projection == ProjectionMode::Ratio2_1)
-		{
-			// At present, it doesn't look like there is any need to 'skew' regular sprites
-			// in the same way that we are skewing tiles.
-			
-			/* coordinates<float> isometric_coords;
-			x_on_window = (dx + dy) * (dimensions.x/2);
-			y_on_window = (dx - dy) * (dimensions.y/2); */
-		}
 		
 		if (x_on_window-dimensions.x > resolution.x || x_on_window+dimensions.x < 0)
 		{
@@ -231,26 +206,13 @@ namespace ForgetteDirectX
 			return;
 		}
 		
-		// std::println("{}", y_on_window);
-		
 		dimensions.y *= zoom_level;
 		dimensions.x *= zoom_level;
 		
-		D2D1_RECT_F draw_rect;
-		
-		/* draw_rect =
-			D2D1::RectF
-			(
-				x_on_window, y_on_window, 
-				x_on_window+dimensions.x, y_on_window+dimensions.y
-			); */
-		
-		draw_rect = 
-			D2D1::RectF
-			(
-				x_on_window-(dimensions.x/2), y_on_window-dimensions.y, 
-				x_on_window+(dimensions.x/2), y_on_window
-			);
+		D2D1_RECT_F draw_rect = D2D1::RectF(
+			x_on_window-(dimensions.x/2), y_on_window-dimensions.y, 
+			x_on_window+(dimensions.x/2), y_on_window
+		);
 		
 		d2d1_render_target->DrawBitmap(
 			bitmap,

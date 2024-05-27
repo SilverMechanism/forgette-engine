@@ -129,7 +129,7 @@ export
 	    	
 	    	else if constexpr (std::is_same_v<T, float>)
 	    	{
-	    		return std::abs(x + y) > std::numeric_limits<float>::epsilon();
+	    		return (std::abs(x) + std::abs(y)) > std::numeric_limits<float>::epsilon();
 	    	}
 	    }
 	    

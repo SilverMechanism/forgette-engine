@@ -20,7 +20,7 @@ export
 
 void Move::execute()
 {
-       // Update velocity by subtracting the last movement input
+    // Update velocity by subtracting the last movement input
     velocity = {velocity.x - last_movement_input.x, velocity.y - last_movement_input.y};
     
     if (std::abs(velocity.x) > 0 || std::abs(velocity.y) > 0)
@@ -46,12 +46,12 @@ void Move::execute()
     
     if (movement_input)
     {
-    	// movement_input.x = movement_input.x + movement_input.y / static_cast<float>(std::sqrt(2));
-    	
+    	// Convert input to match the isometric projection
     	coordinates<float> base_input = movement_input;
     	movement_input.x = base_input.x - base_input.y;
     	movement_input.y = base_input.x + base_input.y;
     	
+    	// Normalize the input
         float input_size = std::sqrt(movement_input.x * movement_input.x + movement_input.y * movement_input.y);
         if (input_size > 0.0f) {
             movement_input.x /= input_size;

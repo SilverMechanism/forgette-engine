@@ -53,10 +53,12 @@ export
 		
 		void finish_setup();
 		
-		void generate_flatmap(std::string tile_name);
+		void generate_flatmap(std::string tile_name, int tiles_x, int tiles_y);
 		void generate_map_from_image(const std::wstring &filepath);
 		
 		void render_tiles();
+		
+		const coordinates<float> tile_size = {36, 36}; // square yard
 		
 	protected:
 		bool was_setup = false;
@@ -124,34 +126,30 @@ void GameMap::finish_setup()
 
 static ptr::keeper<Sprite> default_sprite_keeper;
 
-void GameMap::generate_flatmap(std::string tile_name)
-{
-	const coordinates<int> map_size = {128, 128};
-	const coordinates<float> tile_size = {36, 36};
-	coordinates<float> map_location = {0, 0};
+void GameMap::generate_flatmap(std::string tile_name, int tiles_x, int tiles_y)
+{	
+	if (!(tiles_y % 2) || !(tiles_x % 2))
+	{
+		assert("Number of tiles on map must be an even number");
+	}
 	
-	/* Sprite* default_sprite = 
-		new Sprite
-		(
-			get_exe_dir() + L"sprites\\environment\\misc\\default_tile.png",
-			{0, 0},
-			{128, 64}
-		);
-	default_sprite->draw_size = default_sprite->get_dimensions(); */
+	tiles_y /= 2;
+	tiles_x /= 2;
+	
+	coordinates<float> map_location = {-tiles_x*tile_size.x, -tiles_y*tile_size.y};
 	
 	Sprite* default_sprite = 
-		new Sprite
-		(
+		new Sprite(
 			get_exe_dir() + L"sprites\\environment\\misc\\default_tile.png"
 		);
 	
 	default_sprite_keeper = ptr::keeper<Sprite>(default_sprite);
 	
-	for (int y = 0; y < map_size.y; y++)
+	for (int y = -tiles_y; y < tiles_y; y++)
 	{
 		map_location.y = map_location.y + tile_size.y;
 		
-		for (int x = 0; x < map_size.x; x++)
+		for (int x = -tiles_x; x < tiles_x; x++)
 		{
 			map_location.x = map_location.x + tile_size.x;
 			
@@ -159,13 +157,13 @@ void GameMap::generate_flatmap(std::string tile_name)
 			tiles[map_location].tile_sprite = ptr::watcher<Sprite>(default_sprite_keeper);
 		}
 		
-		map_location.x = 0;
+		map_location.x = -tiles_x*tile_size.x;
 	}
 }
 
 void GameMap::generate_map_from_image(const std::wstring &filepath)
 {	
-	std::vector<std::vector<GFX::RGB8>> colors = GFX::get_image_colors(filepath);
+	/* std::vector<std::vector<GFX::RGB8>> colors = GFX::get_image_colors(filepath);
 	
 	int left_x = (static_cast<int>(colors[0].size()) * -128);
 	int top_y = (static_cast<int>(colors.size()) * 128);
@@ -215,7 +213,7 @@ void GameMap::generate_map_from_image(const std::wstring &filepath)
 		// std::cout << "Reset X to " << left_x << std::endl;
 		map_location.x = left_x;
 		map_location.y = map_location.y - tile_size.y*tile_scale;
-	}
+	} */
 }
 
 void GameMap::render_tiles()
