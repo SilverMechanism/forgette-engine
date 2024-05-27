@@ -1,7 +1,47 @@
 module;
 #include "sqlitecpp/SQLiteCpp.h"
 #include <iostream>
+#include <windows.h>
 export module database;
+
+// this sucks but what can you do
+std::wstring get_exe_dir()
+{
+    wchar_t buffer[MAX_PATH];
+    DWORD result = GetModuleFileNameW(NULL, buffer, MAX_PATH);
+
+    std::wstring exe_path(buffer);
+	
+	std::wstring exe_dir = exe_path;
+	int i = 0;
+	for (i = static_cast<int>(exe_dir.size()); i > -1; i--)
+	{
+		if (exe_dir[i] == '\\')
+		{
+			break;
+		}
+	}
+	
+	i = static_cast<int>(exe_dir.size()) - i;
+	
+	for (i; i > 0; i--)
+	{
+		exe_dir.pop_back();
+	}
+	
+	return exe_dir + L"\\";
+}
+
+std::string wstring_to_string(const std::wstring &to_convert)
+{
+	if (to_convert.empty()) return std::string();
+
+    int size_needed = WideCharToMultiByte(CP_UTF8, 0, &to_convert[0], (int)to_convert.size(), NULL, 0, NULL, NULL);
+    std::string conversion(size_needed, 0);
+    WideCharToMultiByte(CP_UTF8, 0, &to_convert[0], (int)to_convert.size(), &conversion[0], size_needed, NULL, NULL);
+    return conversion;
+}
+// ...
 
 export namespace database
 {
@@ -12,7 +52,8 @@ export namespace database
 	{
 		std::string name;
 		std::string path;
-		std::uint8_t index = 0;
+		std::uint8_t atlas_position_x;
+		std::uint8_t atlas_position_y;
 		std::uint8_t scale = 1;
 	};
 	
@@ -54,34 +95,39 @@ namespace database
 {
 	void tiles_add_entry(TileDefinition entry)
 	{
-		SQLite::Database db("database\\tiles.db", SQLite::OPEN_READWRITE);
+		/* SQLite::Database db("database\\tiles.db", SQLite::OPEN_READWRITE);
 		SQLite::Statement query(db, "INSERT INTO tiles (name, path, index, scale) VALUES (?, ?, ?, ?)");
 		query.bind(1, entry.name);
 		query.bind(2, entry.path);
 		query.bind(3, static_cast<int>(entry.index));
 		query.bind(4, static_cast<int>(entry.scale));
 		
-		query.exec();
+		query.exec(); */
 	}
 	
 	TileDefinition tiles_get_entry(std::string name)
 	{
 		TileDefinition entry;
-		
+		// std::cout << "SQLite name search: " << name << std::endl;
+
 		try
 		{
-			SQLite::Database db("D:\\silmech\\workspaces\\forgette\\trunk\\build\\database\\tiles.db", SQLite::OPEN_READWRITE);
-			SQLite::Statement query(db, "SELECT name, path, position, scale FROM tiles WHERE name = ?");
+			std::string db_path = wstring_to_string(get_exe_dir()) + "database\\tiles.db";
+			SQLite::Database db(db_path, SQLite::OPEN_READWRITE);
+			SQLite::Statement query(db, "SELECT name, path, atlas_x, atlas_y, scale FROM tiles WHERE name = ?");
 			query.bind(1, name);
 
 			if (query.executeStep())
 			{
-				TileDefinition entry;
 				entry.name = query.getColumn(0).getString();
 				entry.path = query.getColumn(1).getString();
-				entry.index = static_cast<std::uint8_t>(query.getColumn(2).getInt());
-				entry.scale = static_cast<std::uint8_t>(query.getColumn(3).getInt());
-				return entry;
+				entry.atlas_position_x = static_cast<std::uint8_t>(query.getColumn(2).getInt());
+				entry.atlas_position_y = static_cast<std::uint8_t>(query.getColumn(3).getInt());
+				entry.scale = static_cast<std::uint8_t>(query.getColumn(4).getInt());
+			}
+			else
+			{
+				assert(true);
 			}
 		}
 		catch (const std::exception &e)
@@ -89,7 +135,7 @@ namespace database
 			std::cerr << "SQLite exception: " << e.what() << std::endl;
 			assert(true);
 		}
-	    
-	    return entry;
+
+		return entry;
 	}
 }

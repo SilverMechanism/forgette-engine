@@ -34,8 +34,6 @@ std::wstring get_exe_dir()
 		exe_dir.pop_back();
 	}
 	
-	std::wcout << "exe_dir: " << exe_dir << std::endl;
-	
 	return exe_dir + L"\\";
 }
 

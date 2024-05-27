@@ -153,8 +153,9 @@ namespace Forgette
 		);
 		
 		active_map = ptr::keeper<GameMap>(new_map);
+		active_map.get()->generate_flatmap("e");
 		
-		active_map.get()->generate_flatmap("grassy_dirt");
+		// active_map.get()->generate_map_from_image(L"D:\\silmech\\blood_fields.bmp");
 		
 		lua_manager.get()->run_lua_script(script_path);
 		

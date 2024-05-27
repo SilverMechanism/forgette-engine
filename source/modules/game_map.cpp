@@ -1,4 +1,5 @@
 module;
+#include <cassert>
 export module game_map;
 import core;
 import std;
@@ -8,11 +9,19 @@ import gfx;
 import database;
 import sector;
 import entity;
+import directx;
+
+std::map<GFX::RGB8, std::string> pixel_names = {
+	{GFX::RGB8(0, 255, 0), "grassy_dirt"},
+	{GFX::RGB8(0, 100, 0), "grass"},
+	{GFX::RGB8(0, 0, 0), "road"}
+};
 
 export
 {
 	const coordinates<int> tile_size = coordinates<int>(256, 128);
 	const coordinates<int> tile_atlas_size = coordinates<int>(256, 128);
+	const int tile_scale = 1;
 	
 	struct tile
 	{
@@ -45,6 +54,7 @@ export
 		void finish_setup();
 		
 		void generate_flatmap(std::string tile_name);
+		void generate_map_from_image(const std::wstring &filepath);
 		
 		void render_tiles();
 		
@@ -112,60 +122,100 @@ void GameMap::finish_setup()
 	was_setup = true;
 }
 
+static ptr::keeper<Sprite> default_sprite_keeper;
+
 void GameMap::generate_flatmap(std::string tile_name)
 {
-	database::TileDefinition tile_def = database::tiles_get_entry(tile_name);
-	tile_def.path = wstring_to_string(get_exe_dir()) + tile_def.path;
-	std::cout << tile_def.path << std::endl;
+	const coordinates<int> map_size = {128, 128};
+	const coordinates<float> tile_size = {36, 36};
+	coordinates<float> map_location = {0, 0};
 	
-	// *** TESTING HARDCODE ***
+	/* Sprite* default_sprite = 
+		new Sprite
+		(
+			get_exe_dir() + L"sprites\\environment\\misc\\default_tile.png",
+			{0, 0},
+			{128, 64}
+		);
+	default_sprite->draw_size = default_sprite->get_dimensions(); */
 	
+	Sprite* default_sprite = 
+		new Sprite
+		(
+			get_exe_dir() + L"sprites\\environment\\misc\\default_tile.png"
+		);
 	
-	auto tileset_iterator = tileset.find(tile_def.name);
-	// ptr::keeper<Sprite>* sprite_keeper_ptr = nullptr;
+	default_sprite_keeper = ptr::keeper<Sprite>(default_sprite);
 	
-	// We gotta make the sprite first
-	if (tileset_iterator == tileset.end())
+	for (int y = 0; y < map_size.y; y++)
 	{
-		tileset[tile_def.name] = 
-			ptr::keeper<Sprite>
-			(
-				new Sprite
-				(
-					string_to_wstring(tile_def.path),
-					coordinates<int>(0,0) + (tile_atlas_size * tile_def.index),
-					tile_size/tile_def.scale
-				)
-			);
-			
-		tileset[tile_def.name].get()->draw_size = tile_size;
+		map_location.y = map_location.y + tile_size.y;
 		
-		// sprite_keeper_ptr = &tileset[tile_def.name];
-	}
-	else
-	{
-		// sprite_keeper_ptr = &tileset_iterator->second;
-	}
-	
-	// if (sprite_keeper_ptr->get())
-	// {
-		coordinates<float> map_size_iterator = coordinates<float>(-map_size.x, -map_size.y);
-		while (map_size_iterator.x < map_size.x)
+		for (int x = 0; x < map_size.x; x++)
 		{
-			while (map_size_iterator.y < map_size.y)
+			map_location.x = map_location.x + tile_size.x;
+			
+			tiles[map_location] = tile();
+			tiles[map_location].tile_sprite = ptr::watcher<Sprite>(default_sprite_keeper);
+		}
+		
+		map_location.x = 0;
+	}
+}
+
+void GameMap::generate_map_from_image(const std::wstring &filepath)
+{	
+	std::vector<std::vector<GFX::RGB8>> colors = GFX::get_image_colors(filepath);
+	
+	int left_x = (static_cast<int>(colors[0].size()) * -128);
+	int top_y = (static_cast<int>(colors.size()) * 128);
+	
+	coordinates<int> map_location = coordinates<int>(left_x, top_y);
+	std::cout << "Map location: " << std::string(map_location) << std::endl;
+	
+	for (int y = 0; y < colors.size(); y++)
+	{
+		for (int x = 0; x < colors[y].size(); x++)
+		{
+			std::string tile_name = pixel_names[colors[y][x]];
+			
+			database::TileDefinition tile_def = database::tiles_get_entry(tile_name);
+			tile_def.path = wstring_to_string(get_exe_dir()) + tile_def.path;
+			// std::cout << tile_def.path << std::endl;
+			
+			if (tile_def.scale == 0)
 			{
-				// std::println("Made a tile at {}", std::string(map_size_iterator), std::string(map_size));
-				
-				tiles[map_size_iterator] = tile();
-				tiles[map_size_iterator].tile_sprite = ptr::watcher<Sprite>(tileset[tile_def.name]);
-				
-				map_size_iterator.y += tile_size.y;
+				std::cout << "WARNING: TILE DEFINITION SCALE SET TO 0" << std::endl;
 			}
 			
-			map_size_iterator.x += tile_size.x;
-			map_size_iterator.y = -map_size.y;
+			auto tileset_iterator = tileset.find(tile_def.name);
+			if (tileset_iterator == tileset.end())
+			{
+				std::cout << "Making sprite for " << tile_def.name << std::endl;
+				tileset[tile_def.name] = 
+					ptr::keeper<Sprite>
+					(
+						new Sprite
+						(
+							string_to_wstring(tile_def.path),
+							{tile_atlas_size.x * tile_def.atlas_position_x, tile_atlas_size.y * tile_def.atlas_position_y},
+							tile_size/tile_def.scale
+						)
+					);
+					
+				tileset[tile_def.name].get()->draw_size = tile_size * tile_scale;
+			}
+			
+			tiles[map_location] = tile();
+			tiles[map_location].tile_sprite = ptr::watcher<Sprite>(tileset[tile_def.name]);
+			// std::cout << "Made a tile at " << std::string(map_location) << std::endl;
+			map_location.x = map_location.x + tile_size.x*tile_scale;
+			// std::cout << "Pixel (" << x << ", " << y << ")\nCoord (" << map_location.x << ", " << map_location.y << ")\n";
 		}
-	// }
+		// std::cout << "Reset X to " << left_x << std::endl;
+		map_location.x = left_x;
+		map_location.y = map_location.y - tile_size.y*tile_scale;
+	}
 }
 
 void GameMap::render_tiles()
@@ -174,7 +224,19 @@ void GameMap::render_tiles()
 	{
 		if (Sprite* tile_sprite = pair.second.tile_sprite.get())
 		{
-			tile_sprite->render_to_map(pair.first, true);
+			ForgetteDirectX::draw_map_tile
+			(
+				tile_sprite->get_image(), 
+				tile_sprite->get_dimensions(),
+				pair.first,
+				36
+			);
+			
+			// tile_sprite->render_to_map(pair.first, true);
+		}
+		else
+		{
+			assert(true);
 		}
 	}
 }

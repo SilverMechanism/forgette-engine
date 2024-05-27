@@ -93,6 +93,7 @@ export namespace ForgetteDirectX
 	void present(bool vsync);
 	
 	ID2D1Bitmap* create_bitmap_from_file(std::wstring filepath);
+	IWICBitmap* create_wicmap_from_file(const std::wstring &filepath);
 
 	// Returns the resolution as an {width, height} pair.
 	coordinates<float> get_resolution();
@@ -101,8 +102,9 @@ export namespace ForgetteDirectX
 	
 	void set_render_viewpoint(coordinates<float> new_viewpoint);
 	
-	void draw_sprite_to_map(ID2D1Bitmap* bitmap, coordinates<float> dimensions, coordinates<float> map_location, ProjectionMode projection);
-	void draw_sprite_to_map(ID2D1Bitmap* bitmap, coordinates<float> dimensions, coordinates<float> map_location, ProjectionMode projection, coordinates<int> atlas_location, coordinates<int> atlas_size);
+	void draw_sprite_to_map(ID2D1Bitmap* bitmap, coordinates<float> dimensions, coordinates<float> map_location);
+	void draw_sprite_to_map(ID2D1Bitmap* bitmap, coordinates<float> dimensions, coordinates<float> map_location, coordinates<int> atlas_location, coordinates<int> atlas_size);
+	void draw_map_tile(ID2D1Bitmap* bitmap, coordinates<float> dimensions, coordinates<float> map_location, float tile_size);
 }
 
 namespace ForgetteDirectX
@@ -140,24 +142,41 @@ namespace ForgetteDirectX
 		return viewpoint_anchor;
 	}
 	
-	void draw_sprite_to_map(ID2D1Bitmap* bitmap, coordinates<float> dimensions, coordinates<float> map_location, ProjectionMode projection, coordinates<int> atlas_location, coordinates<int> atlas_size)
+	void draw_sprite_to_map(ID2D1Bitmap* bitmap, coordinates<float> dimensions, coordinates<float> map_location, coordinates<int> atlas_location, coordinates<int> atlas_size)
 	{
 		coordinates<float> resolution = get_resolution();
 		
 		float dx = (map_location.x - render_viewpoint.x);
 		float dy = (map_location.y - render_viewpoint.y); // We add instead of subtract because screen space goes down instead of up
-		// Wait what?
-		// This suddenly doesn't really work
-		// Not sure what happened
-		// But now I'm just flipping dy in the conversion to window space instead
 		
-		if (projection == ProjectionMode::Ratio2_1)
+		float x_on_window = ((resolution.x / 2) + dx);
+		float y_on_window = ((resolution.y / 2) - dy);
+		
+		if (default_projection == ProjectionMode::Ratio2_1)
 		{
-			// dy *= 2;
+			coordinates<float> isometric_coords;
+			x_on_window = (map_location.x - map_location.y) * (dimensions.x/2)/36;
+			y_on_window = (map_location.x + map_location.y) * (dimensions.y/2)/36;
+		
+			/* coordinates<float> isometric_viewpoint;
+			isometric_viewpoint.x = (render_viewpoint.x - render_viewpoint.y)  * (dimensions.x/2);
+			isometric_viewpoint.y = (render_viewpoint.x + render_viewpoint.y) * (dimensions.y/2);
+			
+			dx = (isometric_coords.x - isometric_viewpoint.x - isometric_viewpoint.y + isometric_viewpoint.y) * 0.5f;
+        	dy = (isometric_coords.x - isometric_viewpoint.x + isometric_viewpoint.y - isometric_viewpoint.y) * 0.25f;*/
 		}
 		
-		float x_on_window = (dx + (resolution.x / 2));
-		float y_on_window = (-dy + (resolution.y / 2));
+		if (x_on_window-dimensions.x > resolution.x || x_on_window+dimensions.x < 0)
+		{
+			return;
+		}
+		
+		if (y_on_window-dimensions.y > resolution.y || y_on_window+dimensions.y < 0)
+		{
+			return;
+		}
+		
+		// std::cout << "X: " << x_on_window << std::endl << "Y: " << y_on_window << std::endl << std::endl;
 		
 		// std::println("{}", y_on_window);
 		
@@ -170,6 +189,10 @@ namespace ForgetteDirectX
 		D2D1_RECT_F draw_rect = D2D1::RectF(x_on_window-(dimensions.x/2), y_on_window-dimensions.y, x_on_window+(dimensions.x/2), y_on_window);
 		D2D1_RECT_F atlas_rect = D2D1::RectF(atlas_location_f.x, atlas_location_f.y, atlas_location.x+atlas_size_f.x, atlas_location.y+atlas_size_f.y);
 		
+		// std::cout << "Sprite map location: " << std::string(map_location) << "\nRV Map Location: " << std::string(render_viewpoint) << "\nDistance from viewpoint: (" << dx << ", " << dy << ")\n";
+		// std::cout << "Sprite position on window: (" << x_on_window << ", " << y_on_window << ")\n";
+		// std::cout << std::endl << std::endl;
+		
 		d2d1_render_target->DrawBitmap(
 			bitmap,
 			draw_rect, 
@@ -178,31 +201,101 @@ namespace ForgetteDirectX
 			atlas_rect);
 	}
 	
-	void draw_sprite_to_map(ID2D1Bitmap* bitmap, coordinates<float> dimensions, coordinates<float> map_location, ProjectionMode projection)
+	void draw_sprite_to_map(ID2D1Bitmap* bitmap, coordinates<float> dimensions, coordinates<float> map_location)
 	{
 		coordinates<float> resolution = get_resolution();
 		
 		float dx = (map_location.x - render_viewpoint.x);
 		float dy = (map_location.y - render_viewpoint.y); // We add instead of subtract because screen space goes down instead of up
-		// Wait what?
-		// This suddenly doesn't really work
-		// Not sure what happened
-		// But now I'm just flipping dy in the conversion to window space instead
 		
-		if (projection == ProjectionMode::Ratio2_1)
+		float x_on_window = ((resolution.x / 2) + dx);
+		float y_on_window = ((resolution.y / 2) - dy);
+		
+		if (default_projection == ProjectionMode::Ratio2_1)
 		{
-			// dy *= 2;
+			// At present, it doesn't look like there is any need to 'skew' regular sprites
+			// in the same way that we are skewing tiles.
+			
+			/* coordinates<float> isometric_coords;
+			x_on_window = (dx + dy) * (dimensions.x/2);
+			y_on_window = (dx - dy) * (dimensions.y/2); */
 		}
 		
-		float x_on_window = (dx + (resolution.x / 2));
-		float y_on_window = (-dy + (resolution.y / 2));
+		if (x_on_window-dimensions.x > resolution.x || x_on_window+dimensions.x < 0)
+		{
+			return;
+		}
+		
+		if (y_on_window-dimensions.y > resolution.y || y_on_window+dimensions.y < 0)
+		{
+			return;
+		}
 		
 		// std::println("{}", y_on_window);
 		
 		dimensions.y *= zoom_level;
 		dimensions.x *= zoom_level;
 		
-		D2D1_RECT_F draw_rect = D2D1::RectF(x_on_window-(dimensions.x/2), y_on_window-dimensions.y, x_on_window+(dimensions.x/2), y_on_window);
+		D2D1_RECT_F draw_rect;
+		
+		/* draw_rect =
+			D2D1::RectF
+			(
+				x_on_window, y_on_window, 
+				x_on_window+dimensions.x, y_on_window+dimensions.y
+			); */
+		
+		draw_rect = 
+			D2D1::RectF
+			(
+				x_on_window-(dimensions.x/2), y_on_window-dimensions.y, 
+				x_on_window+(dimensions.x/2), y_on_window
+			);
+		
+		d2d1_render_target->DrawBitmap(
+			bitmap,
+			draw_rect, 
+			1.0f,
+			default_interp_mode, 
+			NULL);
+	}
+	
+	void draw_map_tile(ID2D1Bitmap* bitmap, coordinates<float> dimensions, coordinates<float> map_location, float tile_size)
+	{
+		coordinates<float> resolution = get_resolution();
+		
+		float dx = (map_location.x - render_viewpoint.x);
+		float dy = (map_location.y - render_viewpoint.y);
+		
+		float x_on_window = ((resolution.x / 2) + dx);
+		float y_on_window = ((resolution.y / 2) - dy);
+		
+		if (default_projection == ProjectionMode::Ratio2_1)
+		{
+			coordinates<float> isometric_coords;
+			x_on_window = (dx + dy) * (dimensions.x/2)/tile_size;
+			y_on_window = (dx - dy) * (dimensions.y/2)/tile_size;
+		}
+		
+		if (x_on_window-dimensions.x > resolution.x || x_on_window+dimensions.x < 0)
+		{
+			return;
+		}
+		
+		if (y_on_window-dimensions.y > resolution.y || y_on_window+dimensions.y < 0)
+		{
+			return;
+		}
+		
+		dimensions.y *= zoom_level;
+		dimensions.x *= zoom_level;
+			
+		D2D1_RECT_F draw_rect =
+			D2D1::RectF
+			(
+				x_on_window, y_on_window, 
+				x_on_window+dimensions.x, y_on_window+dimensions.y
+			);
 		
 		d2d1_render_target->DrawBitmap(
 			bitmap,
@@ -240,7 +333,7 @@ namespace ForgetteDirectX
 			check_hr(fail_message + "WIC Factory invalid.", MAKE_HRESULT(SEVERITY_ERROR, FACILITY_ITF, 70001));
 		}
 		
-		std::wcout << L"Filepath: " << filepath << std::endl;
+		// std::wcout << L"Filepath: " << filepath << std::endl;
 		IWICBitmapDecoder* decoder;
 		HRESULT hr;
 		hr = wic_factory->CreateDecoderFromFilename(
@@ -249,7 +342,7 @@ namespace ForgetteDirectX
 				GENERIC_READ,
 				WICDecodeMetadataCacheOnLoad,
 				&decoder);
-		check_hr(fail_message + "decoder creation failed.", hr);
+		check_hr(fail_message + "decoder creation failed\n"+wstring_to_string(filepath), hr);
 				
 		IWICBitmapFrameDecode* frame = nullptr;
 		hr = decoder->GetFrame(0, &frame);
@@ -276,6 +369,41 @@ namespace ForgetteDirectX
 		check_hr(fail_message + "render target could not create bitmap from wic type.", hr);
 		
 		return bitmap;
+	}
+	
+	IWICBitmap* create_wicmap_from_file(const std::wstring &filepath)
+	{
+		std::string fail_message = "Cannot create bitmap from file: ";
+		
+	    if (!wic_factory) {
+	        check_hr(fail_message + "WIC Factory invalid.", MAKE_HRESULT(SEVERITY_ERROR, FACILITY_ITF, 70001));
+	    }
+	
+	    IWICBitmapDecoder* decoder = nullptr;
+	    HRESULT hr = wic_factory->CreateDecoderFromFilename(
+	        filepath.c_str(),
+	        nullptr,
+	        GENERIC_READ,
+	        WICDecodeMetadataCacheOnLoad,
+	        &decoder);
+	    check_hr(fail_message + "decoder creation failed.", hr);
+	
+	    IWICBitmapFrameDecode* frame = nullptr;
+	    hr = decoder->GetFrame(0, &frame);
+	    check_hr(fail_message + "could not get frame.", hr);
+	
+	    IWICBitmap* wicBitmap = nullptr;
+	    hr = wic_factory->CreateBitmapFromSource(
+	        frame,
+	        WICBitmapCacheOnLoad,
+	        &wicBitmap);
+	    check_hr(fail_message + "could not create IWICBitmap.", hr);
+	
+	    // Release resources
+	    if (frame) frame->Release();
+	    if (decoder) decoder->Release();
+	
+	    return wicBitmap;
 	}
 	
 	void prerender()
@@ -479,7 +607,7 @@ namespace ForgetteDirectX
 	{
 		win_compat::Window& window = win_compat::Window::instance();
 		RECT client_rect;
-		GetClientRect(window.handle, &client_rect);
+		GetWindowRect(window.handle, &client_rect);
 
 		return { float(client_rect.right - client_rect.left), float(client_rect.bottom - client_rect.top) };
 	}

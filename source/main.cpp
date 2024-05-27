@@ -1,14 +1,14 @@
+module;
 #include <windows.h>
 #include <cstdio>
 #include "luajit/lua.hpp"
-import std;
+export module main;
 import forgette;
 import windows;
-import timers;
-import directx;
 import input;
 import lua_interop;
 import core;
+import std;
 
 MSG message;
 
@@ -66,17 +66,17 @@ int WINAPI wWinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, 
 	UpdateWindow(window.handle);
 	SetCapture(window.handle);
 	
-	std::println("Initializing engine...");
+	// std::println("Initializing engine...");
 	Forgette::Engine* engine = new Forgette::Engine();
 	
 	if (!engine->healthy)
 	{
-		std::println("Fatal Error: GFX failed to initialize.");
+		// std::println("Fatal Error: GFX failed to initialize.");
 		Quit(1);
 	}
 	else
 	{
-		std::println("GFX successfully initialized.");
+		// std::println("GFX successfully initialized.");
 	}
 	
 	set_engine(engine);
@@ -92,7 +92,6 @@ int WINAPI wWinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, 
 	LuaInterop::register_functions(engine->lua_manager.get()->lua_state);
 	
 	std::wstring map_script_path = engine->get_application_dir() + L"\\blood_fields.tofs";
-	std::println("Calling script from \'{}\'", wstring_to_string(map_script_path));
 	engine->load_game_map(map_script_path);
 	
 	// InvalidateRect(win_compat::Window::instance().handle, NULL, TRUE);
@@ -113,7 +112,7 @@ int WINAPI wWinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, 
 		engine->loop();
 	}
 
-	std::println("Goodbye.");
+	// std::println("Goodbye.");
 	FreeConsole();
 	return _exit_code;
 }
@@ -130,12 +129,4 @@ void Quit(int exit_code)
 void QuitNormally()
 {
 	Quit(0);
-}
-
-void PlayIntro()
-{
-	if (TimerManager* TM = get_engine()->timer_manager)
-	{
-		TM->CreateTimer(3.0, []() {});
-	}
 }

@@ -35,6 +35,8 @@ export
 		void render_to_screen(coordinates<float> screen_location);
 		
 		void render_to_map(coordinates<float> map_location, bool force_render);
+		
+		GFX::raw_image* get_image();
 	private:
 		ptr::keeper<GFX::raw_image> image;
 	};
@@ -109,7 +111,6 @@ void Sprite::render_to_map(coordinates<float> map_location, bool force_render/*,
 				image.get(),
 				draw_size,
 				map_location,
-				ForgetteDirectX::default_projection,
 				atlas_location,
 				atlas_size
 			);
@@ -120,10 +121,18 @@ void Sprite::render_to_map(coordinates<float> map_location, bool force_render/*,
 			(
 				image.get(), 
 				get_dimensions(), 
-				map_location, 
-				ForgetteDirectX::default_projection
+				map_location
 			);
 		}
 	}
+	else
+	{
+		std::cout << "SPRITE: My image isn't valid!" << std::endl;
+	}
 }
 #endif
+
+GFX::raw_image* Sprite::get_image()
+{
+	return image.get();
+}
