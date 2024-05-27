@@ -125,6 +125,7 @@ void GameMap::finish_setup()
 }
 
 static ptr::keeper<Sprite> default_sprite_keeper;
+static ptr::keeper<Sprite> default_sprite2_keeper;
 
 void GameMap::generate_flatmap(std::string tile_name, int tiles_x, int tiles_y)
 {	
@@ -142,8 +143,18 @@ void GameMap::generate_flatmap(std::string tile_name, int tiles_x, int tiles_y)
 		new Sprite(
 			get_exe_dir() + L"sprites\\environment\\misc\\default_tile.png"
 		);
+		
+	Sprite* default_sprite2 = 
+		new Sprite(
+			get_exe_dir() + L"sprites\\environment\\misc\\default_tile3.png"
+		);
+	
+	std::random_device rd;
+	std::mt19937 gen(rd());
+	std::uniform_int_distribution<> distr(0, 1);
 	
 	default_sprite_keeper = ptr::keeper<Sprite>(default_sprite);
+	default_sprite2_keeper = ptr::keeper<Sprite>(default_sprite2);
 	
 	for (int y = -tiles_y; y < tiles_y; y++)
 	{
@@ -154,7 +165,15 @@ void GameMap::generate_flatmap(std::string tile_name, int tiles_x, int tiles_y)
 			map_location.x = map_location.x + tile_size.x;
 			
 			tiles[map_location] = tile();
-			tiles[map_location].tile_sprite = ptr::watcher<Sprite>(default_sprite_keeper);
+			
+			if (distr(gen))
+			{
+				tiles[map_location].tile_sprite = ptr::watcher<Sprite>(default_sprite2_keeper);
+			}
+			else
+			{
+				tiles[map_location].tile_sprite = ptr::watcher<Sprite>(default_sprite_keeper);
+			}
 		}
 		
 		map_location.x = -tiles_x*tile_size.x;
