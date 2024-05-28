@@ -60,8 +60,8 @@ public:
 	{
 		LARGE_INTEGER new_runtime;
 		QueryPerformanceCounter(&new_runtime);
-		LONGLONG ll_delta_time = new_runtime.QuadPart - last_runtime.QuadPart / frequency.QuadPart;
-		delta_time = static_cast<float>(ll_delta_time);
+		LONGLONG ll_delta_time = (new_runtime.QuadPart - last_runtime.QuadPart);
+		delta_time = static_cast<float>(ll_delta_time)/frequency.QuadPart;
 		float interval = delta_time;
 
 		Timers.erase(std::remove_if(Timers.begin(), Timers.end(),

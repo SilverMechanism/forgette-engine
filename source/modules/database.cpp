@@ -59,6 +59,8 @@ export namespace database
 	
 	void tiles_add_entry(TileDefinition entry);
 	TileDefinition tiles_get_entry(std::string name);
+	
+	std::string get_sprite_path(std::string sprite_name);
 }
 
 void database::print_db(std::wstring path)
@@ -105,6 +107,11 @@ namespace database
 		query.exec(); */
 	}
 	
+	std::string make_db_path(std::string db_name)
+	{
+		return wstring_to_string(get_exe_dir()) + "database\\" + db_name + ".db";
+	}
+	
 	TileDefinition tiles_get_entry(std::string name)
 	{
 		TileDefinition entry;
@@ -137,5 +144,26 @@ namespace database
 		}
 
 		return entry;
+	}
+	
+	std::string get_sprite_path(std::string sprite_name)
+	{
+		std::string sprite_path;
+		
+		std::string db_path = make_db_path("sprites");
+		SQLite::Database db(db_path, SQLite::OPEN_READWRITE);
+		SQLite::Statement query(db, "SELECT name, path FROM sprites WHERE name = ?");
+		query.bind(1, sprite_name);
+		
+		if (query.executeStep())
+		{
+			sprite_path = query.getColumn(1).getString();
+		}
+		else
+		{
+			assert("Failed to retrieve sprite path from database");
+		}
+		
+		return sprite_path;
 	}
 }

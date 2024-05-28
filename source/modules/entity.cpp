@@ -18,6 +18,8 @@ export
 		virtual void render_update();
 		virtual bool initialize();
 		std::string get_display_name();
+		
+		virtual void on_spawn();
 
 		bool should_game_update = false;
 		bool should_render_update = false;
@@ -65,4 +67,9 @@ void Entity::game_update(float delta_time)
 std::string Entity::get_display_name()
 {
 	return display_name;
+}
+
+void Entity::on_spawn()
+{
+	
 }

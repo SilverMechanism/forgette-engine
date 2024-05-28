@@ -10,6 +10,7 @@ export module sprite;
 import std;
 import gfx;
 import core;
+import database;
 
 export
 {
@@ -18,11 +19,15 @@ export
 	public:
 		Sprite();
 		
-		Sprite(std::wstring path_to_image);
-		Sprite(std::wstring path_to_image, coordinates<int> _atlas_location, coordinates<int> _atlas_size);
+		Sprite(std::string sprite_name);
+		Sprite(std::string sprite_name, coordinates<int> _atlas_location, coordinates<int> _atlas_size);
+		
+		Sprite(std::wstring sprite_path);
+		Sprite(std::wstring sprite_path, coordinates<int> _atlas_location, coordinates<int> _atlas_size);
 		
 		// Load the image from disk, returns false if failed
-		bool load(std::wstring path_to_image);
+		bool load(std::string sprite_name);
+		bool load(std::wstring sprite_path);
 		
 		bool use_atlas = false;
 		coordinates<int> atlas_location;
@@ -47,22 +52,42 @@ Sprite::Sprite()
 	image = ptr::keeper<GFX::raw_image>(nullptr);
 }
 
-Sprite::Sprite(std::wstring path_to_image, coordinates<int> _atlas_location, coordinates<int> _atlas_size) :
-	Sprite(path_to_image)
+Sprite::Sprite(std::string sprite_name, coordinates<int> _atlas_location, coordinates<int> _atlas_size) :
+	Sprite(sprite_name)
+{
+	atlas_location = _atlas_location;
+	atlas_size = _atlas_size;
+}
+
+Sprite::Sprite(std::wstring sprite_path, coordinates<int> _atlas_location, coordinates<int> _atlas_size) :
+	Sprite(sprite_path)
 {
 	atlas_location = _atlas_location;
 	atlas_size = _atlas_size;
 }
 
 #ifdef WIN64
-Sprite::Sprite(std::wstring path_to_image)
+Sprite::Sprite(std::string sprite_name)
 {
-	assert(load(path_to_image));
+	assert(load(sprite_name));
 }
 
-bool Sprite::load(std::wstring path_to_image)
+Sprite::Sprite(std::wstring sprite_path)
 {
-	image = ptr::keeper<GFX::raw_image>(GFX::load_image_file(path_to_image));
+	assert(load(sprite_path));
+}
+
+bool Sprite::load(std::string sprite_name)
+{
+	std::string sprite_path = database::get_sprite_path(sprite_name);
+	image = ptr::keeper<GFX::raw_image>(GFX::load_image_file(string_to_wstring(sprite_path)));
+	return image.get();
+}
+
+bool Sprite::load(std::wstring sprite_path)
+{
+	std::cout << "[SPRITE] WARNING: Loading a sprite directly from a path using load() is deprecated.\n[SPRITE] Path used: " << wstring_to_string(sprite_path) << std::endl << std::endl;
+	image = ptr::keeper<GFX::raw_image>(GFX::load_image_file(sprite_path));
 	return image.get();
 }
 

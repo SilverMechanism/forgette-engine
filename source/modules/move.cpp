@@ -1,24 +1,25 @@
 module;
-export module move;
+export module movement;
 import action;
 import std;
 import core;
 
 export
 {
-	class Move : public Action
+	class Movement
 	{
 	public:
-		virtual void execute() override;
+		coordinates<float> apply_velocity(coordinates<float> map_location, float delta_time);
 		
 		coordinates<float> velocity;
 		coordinates<float> movement_input;
 		coordinates<float> last_movement_input;
 		
+		float walk_speed = 84.0f;
 	};
 }
 
-void Move::execute()
+coordinates<float> Movement::apply_velocity(coordinates<float> map_location, float delta_time)
 {
     // Update velocity by subtracting the last movement input
     velocity = {velocity.x - last_movement_input.x, velocity.y - last_movement_input.y};
@@ -27,20 +28,20 @@ void Move::execute()
     {
         if (velocity.x > 0.0f)
         {
-            velocity.x = std::max(0.0f, velocity.x - 1.0f);
+            velocity.x = std::max(0.0f, velocity.x - walk_speed);
         }
         else
         {
-            velocity.x = std::min(0.0f, velocity.x + 1.0f);
+            velocity.x = std::min(0.0f, velocity.x + walk_speed);
         }
         
         if (velocity.y > 0.0f)
         {
-            velocity.y = std::max(0.0f, velocity.y - 1.0f);
+            velocity.y = std::max(0.0f, velocity.y - walk_speed);
         }
         else
         {
-            velocity.y = std::min(0.0f, velocity.y + 1.0f);
+            velocity.y = std::min(0.0f, velocity.y + walk_speed);
         }
     }
     
@@ -58,10 +59,12 @@ void Move::execute()
             movement_input.y /= input_size;
         }
         
-        velocity = {velocity.x + movement_input.x, velocity.y + movement_input.y};
+        velocity = {velocity.x + (movement_input.x*walk_speed), velocity.y + (movement_input.y*walk_speed)};
     }
     
     last_movement_input = movement_input;
     movement_input = {0.0f, 0.0f}; // Reset movement input after applying it
     // std::cout << "Current velocity: " << std::string(velocity) << std::endl;
+    
+    return map_location + (velocity * delta_time);
 }

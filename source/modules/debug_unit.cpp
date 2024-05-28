@@ -7,7 +7,7 @@ import sprite_entity;
 import forgette;
 import input;
 import std;
-import move;
+import movement;
 
 export
 {
@@ -17,39 +17,29 @@ export
 	public:
 		DebugUnit();
 		
-		Move move;
+		Movement movement;
 		
 		virtual void game_update(float delta_time) override;
 	private:
-		ptr::watcher<SpriteEntity> sprite;
 	};
 }
 
 DebugUnit::DebugUnit()
 {
 	display_name = "Debug Unit";
+	sprite_name = "man-nw";
 	
-	get_engine()->spawn_entity<SpriteEntity>(coordinates<float>(0,0), sprite);
-	if (sprite)
-	{
-		sprite->reload_sprite(true, get_exe_dir() + L"sprites\\man-nw.png");
-	}
-	
-	input::AddInputBinding(0x0044, input::KeyEventType::key_down, [this]() {this->move.movement_input = this->move.movement_input + coordinates<float>(1.0f, 0.0f);}, 0);
-	input::AddInputBinding(0x0041, input::KeyEventType::key_down, [this]() {this->move.movement_input = this->move.movement_input + coordinates<float>(-1.0f, 0.0f);}, 0);
-	input::AddInputBinding(0x0057, input::KeyEventType::key_down, [this]() {this->move.movement_input = this->move.movement_input + coordinates<float>(0.0f, 1.0f);}, 0);
-	input::AddInputBinding(0x0053, input::KeyEventType::key_down, [this]() {this->move.movement_input = this->move.movement_input + coordinates<float>(0.0f, -1.0f);}, 0);
+	input::AddInputBinding(0x0044, input::KeyEventType::key_down, [this]() {this->movement.movement_input = this->movement.movement_input + coordinates<float>(1.0f, 0.0f);}, 0);
+	input::AddInputBinding(0x0041, input::KeyEventType::key_down, [this]() {this->movement.movement_input = this->movement.movement_input + coordinates<float>(-1.0f, 0.0f);}, 0);
+	input::AddInputBinding(0x0057, input::KeyEventType::key_down, [this]() {this->movement.movement_input = this->movement.movement_input + coordinates<float>(0.0f, 1.0f);}, 0);
+	input::AddInputBinding(0x0053, input::KeyEventType::key_down, [this]() {this->movement.movement_input = this->movement.movement_input + coordinates<float>(0.0f, -1.0f);}, 0);
 
 	should_game_update = true;
 }
 
 void DebugUnit::game_update(float delta_time)
 {
-	if (sprite)
-	{
-		sprite->set_map_location(get_map_location());
-	}
+	Unit::game_update(delta_time);
 	
-	move.execute();
-	set_map_location(get_map_location() + move.velocity);
+	set_map_location(movement.apply_velocity(map_location, delta_time));
 }

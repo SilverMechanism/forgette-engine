@@ -62,6 +62,7 @@ export namespace Forgette
 #endif
 
 			spawn->set_map_location(world_location);
+			spawn->on_spawn();
 			return spawn;
 		}
 		
@@ -82,6 +83,7 @@ export namespace Forgette
 			#endif
 			
 			spawn->set_map_location(world_location);
+			spawn->on_spawn();
 			return spawn;
 		}
 		

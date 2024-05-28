@@ -413,7 +413,7 @@ namespace ForgetteDirectX
 		std::wcout << L"Using " << adapter_desc.Description << std::endl;
 
 		UINT device_flags = D3D11_CREATE_DEVICE_BGRA_SUPPORT;
-#ifdef _DEBUG
+#ifdef GFX_DEBUG
 		device_flags |= D3D11_CREATE_DEVICE_DEBUG;
 #endif
 
