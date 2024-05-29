@@ -131,14 +131,14 @@ void Sprite::render_to_map(coordinates<float> map_location, bool force_render/*,
 	{
 		if (atlas_size && atlas_location)
 		{
-			ForgetteDirectX::draw_sprite_to_map
+			/* ForgetteDirectX::draw_sprite_to_map
 			(
 				image.get(),
 				draw_size,
 				map_location,
 				atlas_location,
-				atlas_size
-			);
+				atlas_size 
+			); */
 		}
 		else
 		{

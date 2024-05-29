@@ -255,7 +255,7 @@ export namespace ptr
 	        return *this;
 	    }
 		
-		T* get()
+		T* get() const
 		{
 			return _depot ? _depot->data : nullptr;
 		}
@@ -273,15 +273,50 @@ export namespace ptr
 	public:
 		friend class depot<T>;
 		
+		// Create empty watcher
 		watcher() : _depot(nullptr)
 		{
 			
 		}
 		
+		// Construct by getting a depot from a keeper and watch it
 		explicit watcher(const keeper<T> &to_watch) : _depot(to_watch._depot)
 		{
 			_depot->attach_watcher();
 		}
+		
+		// Construct by creating a new copy of another watcher
+		explicit watcher(const watcher<T> &other) : _depot(other._depot)
+		{
+			if (_depot)
+			{
+				_depot->attach_watcher();
+			}
+		}
+		
+		
+		explicit watcher(watcher<T> &&other) noexcept : _depot(other._depot) 
+		{
+			if (_depot)
+			{
+				_depot->attach_watcher();
+			}
+    	}
+    	
+    	watcher<T>& operator=(watcher<T> &&other) noexcept 
+    	{
+	        if (this != &other) 
+	        {
+	            detach();
+	            _depot = other._depot;
+	            
+	            if (_depot)
+	            {
+	            	_depot->attach_watcher();
+	            }
+	        }
+	        return *this;
+    	}
 		
 		template <typename U>
 	    explicit watcher(const keeper<U>& to_watch)
@@ -298,19 +333,6 @@ export namespace ptr
 			}
 	    }
 	    
-        watcher(watcher&& other) noexcept : _depot(other._depot) {
-            other._depot = nullptr;
-        }
-
-        watcher& operator=(watcher&& other) noexcept {
-            if (this != &other) {
-                detach();
-                _depot = other._depot;
-                other._depot = nullptr;
-            }
-            return *this;
-        }
-		
 		T* get() const
 		{
 			return _depot ? _depot->data : nullptr;
@@ -361,8 +383,8 @@ export namespace ptr
 	private:
 		depot<T>* _depot = nullptr;
 		
-		watcher(const watcher&) = delete;
-        watcher& operator=(const watcher&) = delete;
+		// watcher(const watcher&) = delete;
+        // watcher& operator=(const watcher&) = delete;
 	};
 }
 

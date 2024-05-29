@@ -45,7 +45,7 @@ export
 			}
 			
 			coordinates coords = coordinates(static_cast<float>(lua_tonumber(L, 1)), static_cast<float>(lua_tonumber(L, 2)));
-		    lua_pushlightuserdata(L, get_engine()->spawn_entity<]] .. base_class .. [[>(coords));
+		    lua_pushlightuserdata(L, get_engine()->spawn_entity<]] .. base_class .. [[>(coords).get());
 		    
 		    return 1;
 		}

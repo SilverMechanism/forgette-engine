@@ -103,8 +103,10 @@ export namespace ForgetteDirectX
 	void set_render_viewpoint(coordinates<float> new_viewpoint);
 	
 	void draw_sprite_to_map(ID2D1Bitmap* bitmap, coordinates<float> dimensions, coordinates<float> map_location);
-	void draw_sprite_to_map(ID2D1Bitmap* bitmap, coordinates<float> dimensions, coordinates<float> map_location, coordinates<int> atlas_location, coordinates<int> atlas_size);
+	// void draw_sprite_to_map(ID2D1Bitmap* bitmap, coordinates<float> dimensions, coordinates<float> map_location, coordinates<int> atlas_location, coordinates<int> atlas_size);
 	void draw_map_tile(ID2D1Bitmap* bitmap, coordinates<float> dimensions, coordinates<float> map_location, float tile_size);
+
+	coordinates<float> map_to_isometric(coordinates<float> map_location);
 }
 
 namespace ForgetteDirectX
@@ -142,48 +144,12 @@ namespace ForgetteDirectX
 		return viewpoint_anchor;
 	}
 	
-	void draw_sprite_to_map(ID2D1Bitmap* bitmap, coordinates<float> dimensions, coordinates<float> map_location, coordinates<int> atlas_location, coordinates<int> atlas_size)
+	coordinates<float> map_to_isometric(coordinates<float> map_location)
 	{
-		coordinates<float> resolution = get_resolution();
-		
-		float dx = (map_location.x - render_viewpoint.x);
-		float dy = (map_location.y - render_viewpoint.y);
-		
-		float x_on_window = ((resolution.x / 2) + dx);
-		float y_on_window = ((resolution.y / 2) - dy);
-		
-		if (x_on_window-dimensions.x > resolution.x || x_on_window+dimensions.x < 0)
-		{
-			return;
-		}
-		
-		if (y_on_window-dimensions.y > resolution.y || y_on_window+dimensions.y < 0)
-		{
-			return;
-		}
-		
-		dimensions.y *= zoom_level;
-		dimensions.x *= zoom_level;
-		
-		coordinates<float> atlas_location_f = atlas_location;
-		coordinates<float> atlas_size_f = atlas_size;
-		
-		D2D1_RECT_F draw_rect = D2D1::RectF(
-			x_on_window-(dimensions.x/2), y_on_window-dimensions.y, 
-			x_on_window+(dimensions.x/2), y_on_window
-		);
-		
-		D2D1_RECT_F atlas_rect = D2D1::RectF(
-			atlas_location_f.x, atlas_location_f.y, atlas_location.x+atlas_size_f.x, 
-			atlas_location.y+atlas_size_f.y
-		);
-		
-		d2d1_render_target->DrawBitmap(
-			bitmap,
-			draw_rect, 
-			1.0f,
-			default_interp_mode, 
-			atlas_rect);
+		coordinates<float> iso_coords;
+		iso_coords.x = (map_location.x + map_location.y) * (64)/36;
+		iso_coords.y = (map_location.x - map_location.y) * (32)/36;
+		return iso_coords;
 	}
 	
 	void draw_sprite_to_map(ID2D1Bitmap* bitmap, coordinates<float> dimensions, coordinates<float> map_location)
@@ -193,8 +159,12 @@ namespace ForgetteDirectX
 		float dx = (map_location.x - render_viewpoint.x);
 		float dy = (map_location.y - render_viewpoint.y);
 		
-		float x_on_window = ((resolution.x / 2) + dx);
-		float y_on_window = ((resolution.y / 2) - dy);
+		float x_on_window;
+		float y_on_window;
+		
+		coordinates<float> isometric_coords;
+		x_on_window = (dx + dy) * (64)/36 + (resolution.x/2);
+		y_on_window = (dx - dy) * (32)/36 + (resolution.y/2);
 		
 		if (x_on_window-dimensions.x > resolution.x || x_on_window+dimensions.x < 0)
 		{
@@ -229,15 +199,12 @@ namespace ForgetteDirectX
 		float dx = (map_location.x - render_viewpoint.x);
 		float dy = (map_location.y - render_viewpoint.y);
 		
-		float x_on_window = ((resolution.x / 2) + dx);
-		float y_on_window = ((resolution.y / 2) - dy);
+		float x_on_window;
+		float y_on_window;
 		
-		if (default_projection == ProjectionMode::Ratio2_1)
-		{
-			coordinates<float> isometric_coords;
-			x_on_window = (dx + dy) * (dimensions.x/2)/tile_size;
-			y_on_window = (dx - dy) * (dimensions.y/2)/tile_size;
-		}
+		coordinates<float> isometric_coords;
+		x_on_window = (dx + dy) * (dimensions.x/2)/tile_size;
+		y_on_window = (dx - dy) * (dimensions.y/2)/tile_size;
 		
 		if (x_on_window-dimensions.x > resolution.x || x_on_window+dimensions.x < 0)
 		{

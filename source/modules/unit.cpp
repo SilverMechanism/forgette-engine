@@ -14,9 +14,6 @@ export
 			should_render_update = true;
 		}
 		
-		coordinates<float> get_map_location();
-		void set_map_location(coordinates<float> new_location);
-		
 		std::vector<ptr::watcher<Entity>> welded_entities;
 		
 		virtual void render_update() override;
@@ -28,23 +25,11 @@ export
 		virtual void on_spawn() override;
 		
 	protected:
-		std::uint64_t id;
-		coordinates<float> map_location {0.f, 0.f};
 		ptr::keeper<Sprite> sprite;
 		std::string sprite_name;
 		
 	private:
 	};
-}
-
-coordinates<float> Unit::get_map_location()
-{
-	return map_location;
-}
-
-void Unit::set_map_location(coordinates<float> new_location)
-{
-	map_location = new_location;
 }
 
 void Unit::game_update(float delta_time)
@@ -62,7 +47,7 @@ void Unit::render_update()
 {
 	if (Sprite* sprite_ptr = sprite.get())
 	{
-		sprite_ptr->render_to_map(map_location, true);
+		sprite_ptr->render_to_map(get_map_location(), true);
 	}
 }
 

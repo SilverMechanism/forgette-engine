@@ -4,7 +4,6 @@ import core;
 import input;
 import entity;
 import directx;
-import unit;
 
 export
 {
@@ -17,8 +16,6 @@ export
 		void ZoomOut();
 		
 		virtual void game_update(float delta_time) override;
-		
-		ptr::watcher<Unit> lock_on_target;
 	};
 }
 
@@ -42,8 +39,5 @@ void CameraEntity::ZoomOut()
 
 void CameraEntity::game_update(float delta_time)
 {
-	if (lock_on_target.get())
-	{
-		set_map_location(lock_on_target->get_map_location());
-	}
+	
 }

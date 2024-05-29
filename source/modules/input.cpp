@@ -6,7 +6,7 @@ import windows;
 import std;
 
 export namespace input
-{
+{	
 	enum class ModifierKey
 	{
 		none = 0x0000,
@@ -46,11 +46,12 @@ bool bCtrlHeld = false;
 bool bAltHeld = false;
 
 static std::vector<input::InputBind> input_binds(255);
+static std::unordered_map<std::string, int> key_bindings;
 
 export namespace input
 {
 	std::map<int, InputBind> active_down_binds;
-
+	
 	// Returns index of binding, -1 if not found
 	int FindInputBinding(int MatchingKey, KeyEventType MatchingKeyEvent)
 	{
@@ -112,6 +113,56 @@ export namespace input
 			return false;
 		}
 
+		return true;
+	}
+	
+	bool AddInputBinding(std::string name, KeyEventType event_type, std::function<void()> function, int priority)
+	{
+		int key = key_bindings[name];
+		
+		assert(key < 254); // Exceeds Windows virtual key codes
+
+		if (event_type == KeyEventType::key_down)
+		{
+			if (input_binds[key].key_down_bindings.size() == 0 || priority > input_binds[key].key_down_bindings.size())
+			{
+				input_binds[key].key_down_bindings.push_back(function);
+			}
+			else
+			{
+				input_binds[key].key_down_bindings.insert(input_binds[key].key_down_bindings.begin() + priority, function);
+			}
+		}
+		else if (event_type == KeyEventType::key_up)
+		{
+			if (input_binds[key].key_up_bindings.size() == 0 || priority > input_binds[key].key_up_bindings.size())
+			{
+				input_binds[key].key_up_bindings.push_back(function);
+			}
+			else
+			{
+				input_binds[key].key_up_bindings.insert(input_binds[key].key_down_bindings.begin() + priority, function);
+			}
+		}
+		else
+		{
+			return false;
+		}
+
+		return true;
+	}
+	
+	bool map_key(std::string name, int key, bool overwrite)
+	{
+		assert(key < 254);
+		
+		if (!overwrite && (key_bindings.find(name) != key_bindings.end()))
+		{
+			return false;
+		}
+		
+		key_bindings[name] = key;
+		
 		return true;
 	}
 }

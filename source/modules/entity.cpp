@@ -10,7 +10,7 @@ export
 	class Entity
 	{
 	public:
-		Entity();
+		Entity() = default;
 		void set_map_location(coordinates<float> new_location);
 		coordinates<float> get_map_location();
 
@@ -25,18 +25,14 @@ export
 		bool should_render_update = false;
 		
 		coordinates<float> size {1.0f, 1.0f};
+		
+		std::int64_t id = -1;
 	protected:
 		std::string display_name = "Entity";
-		std::uint64_t id;
 		
 	private:
 		coordinates<float> map_location {0.f, 0.f};
 	};
-}
-
-Entity::Entity()
-{
-
 }
 
 bool Entity::initialize()

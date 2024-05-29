@@ -7,12 +7,13 @@ import std;
 import windows;
 import timers;
 import entity;
-import camera_entity;
+import player;
 import input;
 import core;
 import directx;
 import lua_manager;
 import game_map;
+import debug_unit;
 
 export namespace Forgette
 {
@@ -50,10 +51,13 @@ export namespace Forgette
 		
 		ptr::keeper<GameMap> active_map;
 		
+		std::int64_t entity_counter = 0;
+		
 		template<typename T>
-		T* spawn_entity(coordinates<float> world_location)
+		ptr::watcher<Entity> spawn_entity(coordinates<float> world_location)
 		{
 			T* spawn = new T();
+			spawn->id = entity_counter;
 			ptr::keeper<Entity> new_keeper(static_cast<Entity*>(spawn));
 			entities.push_back(std::move(new_keeper));
 
@@ -63,13 +67,15 @@ export namespace Forgette
 
 			spawn->set_map_location(world_location);
 			spawn->on_spawn();
-			return spawn;
+			entity_counter++;
+			return ptr::watcher<Entity>(entities.back());
 		}
 		
 		template<typename T>
-		T* spawn_entity(coordinates<float> world_location, ptr::watcher<T> &new_watcher)
+		ptr::watcher<Entity> spawn_entity(coordinates<float> world_location, ptr::watcher<T> &new_watcher)
 		{
 			T* spawn = new T();
+			spawn->id = entity_counter;
 			entities.push_back(ptr::keeper<Entity>(spawn));
 			
 			const ptr::keeper<Entity> &my_keeper = entities.back();
@@ -84,7 +90,8 @@ export namespace Forgette
 			
 			spawn->set_map_location(world_location);
 			spawn->on_spawn();
-			return spawn;
+			entity_counter++;
+			return ptr::watcher<Entity>(entities.back());
 		}
 		
 		ptr::keeper<LuaManager> lua_manager = ptr::keeper<LuaManager>(nullptr);
@@ -94,7 +101,7 @@ export namespace Forgette
 		std::map<Mode, std::function<void()>> loop_functions;
 		void map_loop();
 		void menu_loop();
-		ptr::watcher<CameraEntity> active_camera;
+		ptr::watcher<Player> local_player;
 	};
 }
 
@@ -136,6 +143,11 @@ namespace Forgette
 		
 		LuaManager* new_lua_manager = new LuaManager;
 		lua_manager = ptr::keeper<LuaManager>(new_lua_manager);
+		
+		input::map_key("move_up", 0x0057, true);
+		input::map_key("move_right", 0x0044, true);
+		input::map_key("move_down", 0x0053, true);
+		input::map_key("move_left", 0x0041, true);
 	}
 
 	Engine::~Engine()
@@ -159,12 +171,13 @@ namespace Forgette
 		
 		// active_map.get()->generate_map_from_image(L"D:\\silmech\\blood_fields.bmp");
 		
+		spawn_entity<Player>(coordinates(0,0), local_player);
+		
+		// ptr::watcher<Entity> debugger = spawn_entity<DebugUnit>(coordinates(0, 0));
+		local_player->possess_unit(ptr::watcher<Entity>(spawn_entity<DebugUnit>(coordinates(0, 0))));
+		
 		lua_manager.get()->run_lua_script(script_path);
-		
-		spawn_entity<CameraEntity>(coordinates(0,0), active_camera);
-		
-		active_camera->lock_on_target = ptr::watcher<Unit>(entities[entities.size()-2]);
-		std::println("{}", active_camera->lock_on_target->get_display_name());
+		// std::println("{}", active_camera->lock_on_target->get_display_name());
 		
 		return;
 	}
@@ -179,9 +192,9 @@ namespace Forgette
 			pair.second.key_down_bindings[0]();
 		}
 		
-		if (active_camera.get())
+		if (local_player.get())
 		{
-			ForgetteDirectX::set_render_viewpoint(active_camera->get_map_location());
+			ForgetteDirectX::set_render_viewpoint(local_player->get_map_location());
 		}
 
 		ForgetteDirectX::prerender();
@@ -189,6 +202,31 @@ namespace Forgette
 		loop_functions[active_mode]();
 
 		ForgetteDirectX::present(true);
+		
+		if (local_player.get())
+		{
+			// std::cout << std::string(local_player->get_map_location()) << std::endl;
+		}
+	}
+	
+	bool z_compare(const ptr::keeper<Entity> &a, const ptr::keeper<Entity> &b)
+	{
+		if (!(a.get() && b.get()))
+		{
+			return false;
+		}
+		
+		auto map_location_a = ForgetteDirectX::map_to_isometric(a.get()->get_map_location());
+		auto map_location_b = ForgetteDirectX::map_to_isometric(b.get()->get_map_location());
+			
+		if (map_location_a.y == map_location_b.y) 
+		{
+		    return map_location_a.x < map_location_b.x;
+	    }
+	    
+	    return map_location_a.y < map_location_b.y;
+	    
+	    return false;
 	}
 	
 	void Engine::map_loop()
@@ -199,6 +237,8 @@ namespace Forgette
 		}
 		
 		active_map.get()->render_tiles();
+		
+		std::sort(entities.begin(), entities.end(), z_compare);
 		
 		for (auto& entity : entities)
 		{
