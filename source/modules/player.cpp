@@ -25,6 +25,8 @@ export
 		
 		ptr::watcher<Entity> controlled_unit;
 		std::vector<InputBinding> input_bindings;
+		
+		coordinates<float> view_rotation;
 	};
 }
 
@@ -33,7 +35,8 @@ Player::Player()
 	display_name = "Player";
 	should_game_update = true;
 	
-	input_bindings.push_back({"move_up", input::KeyEventType::key_down, 0});
+	input_bindings.push_back({"primary", input::KeyEventType::key_down, 0});
+	input_bindings.push_back({"secondary", input::KeyEventType::key_down, 0});
 	input_bindings.push_back({"move_right", input::KeyEventType::key_down, 0});
 	input_bindings.push_back({"move_left", input::KeyEventType::key_down, 0});
 	input_bindings.push_back({"move_down", input::KeyEventType::key_down, 0});

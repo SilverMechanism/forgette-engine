@@ -1,32 +1,25 @@
-/* module;
+module;
 #include "defines.h"
-export module debug_unit;
+export module villager;
 import core;
-import unit;
-import sprite_entity;
-import input;
 import std;
-import movement;
-import input_handler;
+import debug_unit;
 
 export
 {
-	class Villager : public DebugUnit, public InputHandler
+	class Villager : public DebugUnit
 	{
 	public:
-		DebugUnit();
+		Villager();
 		
-		Movement movement;
 		virtual void bind_inputs(std::vector<InputBinding> inputs) override;
 		
 		virtual void game_update(float delta_time) override;
-		
-		std::unordered_map<std::string, std::function<void()>> binds;
 	private:
 	};
 }
 
-DebugUnit::DebugUnit()
+Villager::Villager()
 {
 	display_name = "Villager";
 	sprite_name = "nona";
@@ -34,22 +27,12 @@ DebugUnit::DebugUnit()
 	should_game_update = true;
 }
 
-void DebugUnit::game_update(float delta_time)
+void Villager::game_update(float delta_time)
 {
-	Unit::game_update(delta_time);
-	
-	set_map_location(movement.apply_velocity(get_map_location(), delta_time));
-	
-	std::cout << "[VILLAGER] ID: " << id << "\nPOS: " << std::string(get_map_location()) << "\n\n";
+	DebugUnit::game_update(delta_time);
 }
 
-void DebugUnit::bind_inputs(std::vector<InputBinding> inputs)
+void Villager::bind_inputs(std::vector<InputBinding> inputs)
 {
-	for (auto input : inputs)
-	{
-		if (binds.find(input.name) != binds.end())
-		{
-			input::AddInputBinding(input.name, input.key_event, binds[input.name], input.priority);
-		}
-	}
-}*/
+	
+}

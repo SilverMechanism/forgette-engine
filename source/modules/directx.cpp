@@ -62,6 +62,9 @@ void check_hr(std::string message, HRESULT hr)
 
 export namespace ForgetteDirectX
 {
+	coordinates<float> world_to_screen(coordinates<float> world_coords);
+	coordinates<float> screen_to_world(coordinates<float> screen_coords);
+	
 	enum class ProjectionMode : byte
 	{
 		Ratio2_1,
@@ -105,12 +108,13 @@ export namespace ForgetteDirectX
 	void draw_sprite_to_map(ID2D1Bitmap* bitmap, coordinates<float> dimensions, coordinates<float> map_location);
 	// void draw_sprite_to_map(ID2D1Bitmap* bitmap, coordinates<float> dimensions, coordinates<float> map_location, coordinates<int> atlas_location, coordinates<int> atlas_size);
 	void draw_map_tile(ID2D1Bitmap* bitmap, coordinates<float> dimensions, coordinates<float> map_location, float tile_size);
-
-	coordinates<float> map_to_isometric(coordinates<float> map_location);
 }
 
 namespace ForgetteDirectX
 {
+	const coordinates<float> tile_pixels = {64, 32};
+	const coordinates<float> tile_size = {36, 36};
+	
 	coordinates<float> render_viewpoint;
 	coordinates<float> viewpoint_anchor;
 	float zoom_level {1.0f};
@@ -144,34 +148,47 @@ namespace ForgetteDirectX
 		return viewpoint_anchor;
 	}
 	
-	coordinates<float> map_to_isometric(coordinates<float> map_location)
+	coordinates<float> world_to_screen(coordinates<float> world_coords)
 	{
-		coordinates<float> iso_coords;
-		iso_coords.x = (map_location.x + map_location.y) * (64)/36;
-		iso_coords.y = (map_location.x - map_location.y) * (32)/36;
-		return iso_coords;
+		coordinates<float> resolution = get_resolution();
+		coordinates<float> screen_coords;
+		
+		world_coords = world_coords.isometric();
+		
+		screen_coords.x = world_coords.x + (resolution.x/2);
+		screen_coords.y = world_coords.y + (resolution.y/2);
+		
+		return screen_coords;
+	}
+	
+	coordinates<float> screen_to_world(coordinates<float> screen_coords)
+	{
+		coordinates<float> resolution = get_resolution();
+		coordinates<float> world_coords;
+		
+		world_coords.x = screen_coords.x - (resolution.x/2);
+		world_coords.y = screen_coords.y - (resolution.y/2);
+		
+		return world_coords.world();
 	}
 	
 	void draw_sprite_to_map(ID2D1Bitmap* bitmap, coordinates<float> dimensions, coordinates<float> map_location)
 	{
 		coordinates<float> resolution = get_resolution();
+		coordinates<float> delta;
+		coordinates<float> screen_coords;
 		
-		float dx = (map_location.x - render_viewpoint.x);
-		float dy = (map_location.y - render_viewpoint.y);
+		delta.x = (map_location.x - render_viewpoint.x);
+		delta.y = (map_location.y - render_viewpoint.y);
 		
-		float x_on_window;
-		float y_on_window;
+		screen_coords = world_to_screen(delta);
 		
-		coordinates<float> isometric_coords;
-		x_on_window = (dx + dy) * (64)/36 + (resolution.x/2);
-		y_on_window = (dx - dy) * (32)/36 + (resolution.y/2);
-		
-		if (x_on_window-dimensions.x > resolution.x || x_on_window+dimensions.x < 0)
+		if (screen_coords.x-dimensions.x > resolution.x || screen_coords.x+dimensions.x < 0)
 		{
 			return;
 		}
 		
-		if (y_on_window-dimensions.y > resolution.y || y_on_window+dimensions.y < 0)
+		if (screen_coords.y-dimensions.y > resolution.y || screen_coords.y+dimensions.y < 0)
 		{
 			return;
 		}
@@ -180,8 +197,8 @@ namespace ForgetteDirectX
 		dimensions.x *= zoom_level;
 		
 		D2D1_RECT_F draw_rect = D2D1::RectF(
-			x_on_window-(dimensions.x/2), y_on_window-dimensions.y, 
-			x_on_window+(dimensions.x/2), y_on_window
+			screen_coords.x-(dimensions.x/2), screen_coords.y-dimensions.y, 
+			screen_coords.x+(dimensions.x/2), screen_coords.y
 		);
 		
 		d2d1_render_target->DrawBitmap(

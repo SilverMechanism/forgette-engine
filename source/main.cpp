@@ -87,7 +87,7 @@ int WINAPI wWinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, 
 	input::BindToWindow();
 	input::AddInputBinding(VK_ESCAPE, input::KeyEventType::key_down, &QuitNormally, 0);
 
-	ShowCursor(false);
+	ShowCursor(true);
 	
 	LuaInterop::register_functions(engine->lua_manager.get()->lua_state);
 	

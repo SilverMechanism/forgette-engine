@@ -14,6 +14,7 @@ import directx;
 import lua_manager;
 import game_map;
 import debug_unit;
+import villager;
 
 export namespace Forgette
 {
@@ -144,6 +145,8 @@ namespace Forgette
 		LuaManager* new_lua_manager = new LuaManager;
 		lua_manager = ptr::keeper<LuaManager>(new_lua_manager);
 		
+		input::map_key("primary", 0x0001, true);
+		input::map_key("secondary", 0x0002, true);
 		input::map_key("move_up", 0x0057, true);
 		input::map_key("move_right", 0x0044, true);
 		input::map_key("move_down", 0x0053, true);
@@ -169,15 +172,13 @@ namespace Forgette
 		active_map = ptr::keeper<GameMap>(new_map);
 		active_map.get()->generate_flatmap("e", 128, 128);
 		
-		// active_map.get()->generate_map_from_image(L"D:\\silmech\\blood_fields.bmp");
-		
 		spawn_entity<Player>(coordinates(0,0), local_player);
 		
-		// ptr::watcher<Entity> debugger = spawn_entity<DebugUnit>(coordinates(0, 0));
 		local_player->possess_unit(ptr::watcher<Entity>(spawn_entity<DebugUnit>(coordinates(0, 0))));
 		
+		spawn_entity<Villager>(coordinates(-100, -75));
+		
 		lua_manager.get()->run_lua_script(script_path);
-		// std::println("{}", active_camera->lock_on_target->get_display_name());
 		
 		return;
 	}
@@ -216,8 +217,8 @@ namespace Forgette
 			return false;
 		}
 		
-		auto map_location_a = ForgetteDirectX::map_to_isometric(a.get()->get_map_location());
-		auto map_location_b = ForgetteDirectX::map_to_isometric(b.get()->get_map_location());
+		auto map_location_a = a.get()->get_map_location().isometric();
+		auto map_location_b = b.get()->get_map_location().isometric();
 			
 		if (map_location_a.y == map_location_b.y) 
 		{
@@ -231,6 +232,8 @@ namespace Forgette
 	
 	void Engine::map_loop()
 	{
+		// coordinates<float> mouse_pos = input::get_cursor_map_location();
+		// std::cout << "Mouse position: (" << mouse_pos.x << ", " << mouse_pos.y << ")\n";
 		if (!active_map.get())
 		{
 			return;

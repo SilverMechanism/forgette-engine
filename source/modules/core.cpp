@@ -77,6 +77,41 @@ export
 		
 		}
 		
+		coordinates<float> isometric()
+		{
+			return {((x + y)*64)/36, ((x - y)*32)/36};
+		}
+		
+		coordinates<float> world()
+		{
+			return {(x*36/64)-y, (x*36/32)+y};
+		}
+		
+		coordinates<float> view_isometric()
+		{
+			return {(x - y), (x + y)};
+		}
+		
+		coordinates<float> normalize()
+		{
+	        float magnitude = std::sqrt(x * x + y * y);
+	        
+	        if (magnitude != 0) 
+	        {
+	        	return {x/magnitude, y/magnitude};
+	    	}
+	    	else
+	    	{
+	    		return {0, 0};
+	    	}
+	    }
+		
+		coordinates<float> get_facing(const coordinates<float> location, const coordinates<float> target)
+		{
+			coordinates<float> facing = {target.x - location.x, target.y - location.y};
+			return facing.normalize();
+		}
+		
 		template <typename U>
 	    coordinates(const coordinates<U>& other) {
 	        x = static_cast<T>(other.x);

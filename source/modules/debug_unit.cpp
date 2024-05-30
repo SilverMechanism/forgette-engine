@@ -34,6 +34,8 @@ DebugUnit::DebugUnit()
 
 	should_game_update = true;
 	
+	// binds["primary"] = 		[this]() {std::cout << "Left mouse click!" << std::endl;};
+	// binds["secondary"] = 	[this]() {std::cout << "Right mouse click!" << std::endl;};
 	binds["move_up"] = 		[this]() {this->movement.movement_input = this->movement.movement_input + coordinates<float>(0.0f, 1.0f);};
 	binds["move_right"] = 	[this]() {this->movement.movement_input = this->movement.movement_input + coordinates<float>(1.0f, 0.0f);};
 	binds["move_down"] = 	[this]() {this->movement.movement_input = this->movement.movement_input + coordinates<float>(0.0f, -1.0f);};

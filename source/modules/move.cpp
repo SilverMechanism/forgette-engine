@@ -47,17 +47,11 @@ coordinates<float> Movement::apply_velocity(coordinates<float> map_location, flo
     
     if (movement_input)
     {
-    	// Convert input to match the isometric projection
-    	coordinates<float> base_input = movement_input;
-    	movement_input.x = base_input.x - base_input.y;
-    	movement_input.y = base_input.x + base_input.y;
+    	// Skew input to match our camera orientation
+    	movement_input = movement_input.view_isometric();
     	
     	// Normalize the input
-        float input_size = std::sqrt(movement_input.x * movement_input.x + movement_input.y * movement_input.y);
-        if (input_size > 0.0f) {
-            movement_input.x /= input_size;
-            movement_input.y /= input_size;
-        }
+        movement_input = movement_input.normalize();
         
         velocity = {velocity.x + (movement_input.x*walk_speed), velocity.y + (movement_input.y*walk_speed)};
     }

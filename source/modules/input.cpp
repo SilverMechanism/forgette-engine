@@ -4,6 +4,8 @@ module;
 export module input;
 import windows;
 import std;
+import core;
+import directx;
 
 export namespace input
 {	
@@ -48,9 +50,14 @@ bool bAltHeld = false;
 static std::vector<input::InputBind> input_binds(255);
 static std::unordered_map<std::string, int> key_bindings;
 
+coordinates<float> cursor_location;
+
 export namespace input
 {
 	std::map<int, InputBind> active_down_binds;
+	
+	coordinates<float> get_cursor_screen_location();
+	coordinates<float> get_cursor_map_location();
 	
 	// Returns index of binding, -1 if not found
 	int FindInputBinding(int MatchingKey, KeyEventType MatchingKeyEvent)
@@ -154,7 +161,7 @@ export namespace input
 	
 	bool map_key(std::string name, int key, bool overwrite)
 	{
-		assert(key < 254);
+		assert(key < 255);
 		
 		if (!overwrite && (key_bindings.find(name) != key_bindings.end()))
 		{
@@ -214,25 +221,92 @@ class WO_RawInputObserver : public win_compat::WindowObserver
      
 	virtual bool on_message(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam) override
 	{
-		UINT dwSize = sizeof(RAWINPUT);
-		static BYTE lpb[sizeof(RAWINPUT)];
-
-		GetRawInputData((HRAWINPUT)lParam, RID_INPUT, lpb, &dwSize, sizeof(RAWINPUTHEADER));
-
-		RAWINPUT* raw_input = (RAWINPUT*)lpb;
-
-		if (raw_input->header.dwType == RIM_TYPEMOUSE)
+		switch (uMsg)
 		{
-			input::mouse_relative_x = raw_input->data.mouse.lLastX;
-			input::mouse_relative_y = raw_input->data.mouse.lLastY;
-               
-               if (debug_print)
-               {
-                    std::cout << "Mouse last X: " << input::mouse_relative_x << std::endl;
-			     std::cout << "Mouse last Y: " << input::mouse_relative_y << std::endl;
-               }
+		case WM_INPUT:
+		{
+			UINT dwSize = sizeof(RAWINPUT);
+			static BYTE lpb[sizeof(RAWINPUT)];
+	
+			GetRawInputData((HRAWINPUT)lParam, RID_INPUT, lpb, &dwSize, sizeof(RAWINPUTHEADER));
+	
+			RAWINPUT* raw_input = (RAWINPUT*)lpb;
+	
+			if (raw_input->header.dwType == RIM_TYPEMOUSE)
+			{
+				input::mouse_relative_x = raw_input->data.mouse.lLastX;
+				input::mouse_relative_y = raw_input->data.mouse.lLastY;
+	               
+	               if (debug_print)
+	               {
+	                    std::cout << "Mouse last X: " << input::mouse_relative_x << std::endl;
+				     	std::cout << "Mouse last Y: " << input::mouse_relative_y << std::endl;
+	               }
+			}
+			
+			POINT absolute_position;
+			if (GetCursorPos(&absolute_position))
+			{
+				if (debug_print)
+				{
+					std::cout << "[MOUSE ABSOLUTE]\nMouse absolute X: " << absolute_position.x << std::endl << "Mouse absolute Y: " << absolute_position.y << std::endl << std::endl;
+				}
+				
+				ScreenToClient(hwnd, &absolute_position);
+				if (debug_print)
+				{
+					std::cout << "[MOUSE RELATIVE]\nMouse relative X: " << absolute_position.x << std::endl << "Mouse relative Y: " << absolute_position.y << std::endl << std::endl;
+				}
+				
+				cursor_location = {static_cast<float>(absolute_position.x), static_cast<float>(absolute_position.y)};
+			}
+			break;
 		}
+		case WM_LBUTTONDOWN:
+			if (input_binds[0x0001].key_down_bindings.size())
+			{
+				input_binds[0x0001].key_down_bindings[0]();
+			}
 
+			if (input_binds[0x0001].state == input::InputState::inactive)
+			{
+				input_binds[0x0001].state = input::InputState::active;
+			}
+			break;
+		case WM_RBUTTONDOWN:
+			if (input_binds[0x0002].key_down_bindings.size())
+			{
+				input_binds[0x0002].key_down_bindings[0]();
+			}
+
+			if (input_binds[0x0002].state == input::InputState::inactive)
+			{
+				input_binds[0x0002].state = input::InputState::active;
+			}
+			break;
+		case WM_LBUTTONUP:
+			if (input_binds[0x0001].state == input::InputState::active)
+			{
+				if (input_binds[0x0001].key_up_bindings.size())
+				{
+					input_binds[0x0001].key_up_bindings[0]();
+				}
+				input_binds[0x0001].state = input::InputState::inactive;
+			}
+			break;
+		case WM_RBUTTONUP:
+			if (input_binds[0x0002].state == input::InputState::active)
+			{
+				if (input_binds[0x0002].key_up_bindings.size())
+				{
+					input_binds[0x0002].key_up_bindings[0]();
+				}
+				input_binds[0x0002].state = input::InputState::inactive;
+			}
+			break;
+		default:
+			break;
+		}
 		return true;
 	}
 };
@@ -326,6 +400,12 @@ export namespace input
 
 		RawInputObserver = std::make_shared<WO_RawInputObserver>();
 		window.add_observer(WM_INPUT, RawInputObserver);
+		
+		window.add_observer(WM_LBUTTONDOWN, RawInputObserver);
+		window.add_observer(WM_RBUTTONDOWN, RawInputObserver);
+		
+		window.add_observer(WM_LBUTTONUP, RawInputObserver);
+		window.add_observer(WM_RBUTTONUP, RawInputObserver);
 
 		AddInputBinding(VK_SHIFT, KeyEventType::key_down, OnShiftDown, 0);
 		AddInputBinding(VK_SHIFT, KeyEventType::key_up, OnShiftUp, 0);
@@ -335,5 +415,18 @@ export namespace input
 
 		AddInputBinding(VK_MENU, KeyEventType::key_down, OnAltDown, 0);
 		AddInputBinding(VK_MENU, KeyEventType::key_up, OnAltUp, 0);
+	}
+}
+
+namespace input
+{
+	coordinates<float> get_cursor_screen_location()
+	{
+		return cursor_location;
+	}
+	
+	coordinates<float> get_cursor_map_location()
+	{
+		return ForgetteDirectX::screen_to_world(cursor_location);
 	}
 }
