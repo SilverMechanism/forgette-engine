@@ -17,7 +17,6 @@ export
 	public:
 		DebugUnit();
 		
-		Movement movement;
 		virtual void bind_inputs(std::vector<InputBinding> inputs) override;
 		
 		virtual void game_update(float delta_time) override;

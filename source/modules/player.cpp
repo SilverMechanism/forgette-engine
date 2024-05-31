@@ -37,6 +37,7 @@ Player::Player()
 	
 	input_bindings.push_back({"primary", input::KeyEventType::key_down, 0});
 	input_bindings.push_back({"secondary", input::KeyEventType::key_down, 0});
+	input_bindings.push_back({"move_up", input::KeyEventType::key_down, 0});
 	input_bindings.push_back({"move_right", input::KeyEventType::key_down, 0});
 	input_bindings.push_back({"move_left", input::KeyEventType::key_down, 0});
 	input_bindings.push_back({"move_down", input::KeyEventType::key_down, 0});
@@ -68,6 +69,11 @@ void Player::possess_unit(ptr::watcher<Entity> unit)
 	if (InputHandler* ih = dynamic_cast<InputHandler*>(controlled_unit.get()))
 	{
 		ih->bind_inputs(input_bindings);
+	}
+	
+	if (Unit* unit_unit = dynamic_cast<Unit*>(controlled_unit.get()))
+	{
+		unit_unit->movement.skew_input = true;
 	}
 	
 	std::cout << "Attached to Entity " << controlled_unit.get()->id << std::endl;

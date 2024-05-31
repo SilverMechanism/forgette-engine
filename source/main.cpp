@@ -33,6 +33,9 @@ class WO_CloseObserver : public win_compat::WindowObserver
 
 int WINAPI wWinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, _In_ LPWSTR lpCmdLine, _In_ int nCmdShow)
 {
+int argc = __argc;
+wchar_t** argv = __wargv;
+
 #ifdef _DEBUG
 	if (!AttachConsole(ATTACH_PARENT_PROCESS))
 	{
@@ -86,8 +89,17 @@ int WINAPI wWinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, 
 
 	input::BindToWindow();
 	input::AddInputBinding(VK_ESCAPE, input::KeyEventType::key_down, &QuitNormally, 0);
-
-	ShowCursor(true);
+	
+	bool show_cursor = false;
+    for (int i = 1; i < argc; ++i)
+    {
+        if (wcscmp(argv[i], L"-show_cursor") == 0)
+        {
+            show_cursor = true;
+            break;
+        }
+    }
+	ShowCursor(show_cursor);
 	
 	LuaInterop::register_functions(engine->lua_manager.get()->lua_state);
 	

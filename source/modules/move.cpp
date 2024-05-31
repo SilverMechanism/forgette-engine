@@ -16,6 +16,9 @@ export
 		coordinates<float> last_movement_input;
 		
 		float walk_speed = 84.0f;
+		
+		// Useful if controlled by a human to orient the movement input to the camera rotation
+		bool skew_input = false;
 	};
 }
 
@@ -47,8 +50,10 @@ coordinates<float> Movement::apply_velocity(coordinates<float> map_location, flo
     
     if (movement_input)
     {
-    	// Skew input to match our camera orientation
-    	movement_input = movement_input.view_isometric();
+    	if (skew_input)
+    	{
+	    	movement_input = movement_input.view_isometric();
+    	}
     	
     	// Normalize the input
         movement_input = movement_input.normalize();

@@ -7,6 +7,8 @@ module;
 #include <windows.h>
 #include <wincodec.h>
 #include <cassert>
+#include <d2d1effects_1.h>
+#include <d2d1_1helper.h>
 export module directx;
 import windows;
 import std;
@@ -35,6 +37,7 @@ ComPtr<IDWriteTextFormat> text_format;
 ComPtr<IDWriteTextLayout> text_layout;
 ComPtr<IDWriteFontFile> old_english_font_file;
 ComPtr<IDWriteFontFace> old_english_font_face;
+ComPtr<ID2D1Effect> specular;
 
 class WO_DestroyObserver : public win_compat::WindowObserver
 {
@@ -536,6 +539,10 @@ namespace ForgetteDirectX
 			1000.f,
 			1000.f,
 			&text_layout);
+			
+		std::cout << "Initializing graphical effects" << std::endl;
+		
+		d2d1_device_context->CreateEffect(CLSID_D2D1PointSpecular, &specular);
 		
 		std::cout << "DirectX initialized successfully." << std::endl;
 		

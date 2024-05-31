@@ -2,6 +2,7 @@ module;
 export module unit;
 import entity;
 import sprite;
+import movement;
 
 export
 {
@@ -23,6 +24,11 @@ export
 		std::string get_sprite_name();
 		
 		virtual void on_spawn() override;
+		
+		float radius = 12.0f;
+		Movement movement;
+		
+		float health = 100.f;
 		
 	protected:
 		ptr::keeper<Sprite> sprite;

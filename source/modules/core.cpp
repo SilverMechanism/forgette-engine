@@ -9,6 +9,12 @@ import std;
 
 static std::wstring exe_path;
 
+export namespace core_math
+{
+	template <class T>
+	constexpr T pi = static_cast<T>(3.141592653589793);
+}
+
 std::wstring get_exe_path()
 {
 	return exe_path;
@@ -92,9 +98,14 @@ export
 			return {(x - y), (x + y)};
 		}
 		
+		float magnitude()
+		{
+			return std::sqrt(x * x + y * y);
+		}	
+		
 		coordinates<float> normalize()
 		{
-	        float magnitude = std::sqrt(x * x + y * y);
+	        float magnitude = this->magnitude();
 	        
 	        if (magnitude != 0) 
 	        {
@@ -121,6 +132,11 @@ export
 		coordinates operator+(const coordinates& other) const
 	    {
 	        return {x + other.x, y + other.y};
+	    }
+	    
+	    coordinates operator-(const coordinates& other) const
+	    {
+	        return {x - other.x, y - other.y};
 	    }
 	    
 	    template <typename U>
@@ -176,6 +192,22 @@ export
 	    explicit operator std::string() const
 	    {
 	    	return std::format("({}, {})", x, y);
+	    }
+	    
+	    coordinates<float> random_nearby(float radius)
+	    {
+	    	std::srand(static_cast<unsigned int>(std::time(0)));
+	    	
+	    	float angle = static_cast<float>(std::rand())/RAND_MAX*2*core_math::pi<float>;
+	    	
+	    	float random_radius = static_cast<float>(std::rand())/RAND_MAX*radius;
+	    	
+	    	return {this->x + random_radius * std::cos(angle), this->y + random_radius * std::sin(angle)};
+	    }
+	    
+	    coordinates<float> towards(coordinates<float> to_look_at)
+	    {
+	    	return coordinates<float>(to_look_at.x - this->x, to_look_at.y - this->y).normalize();
 	    }
 	};
 	
@@ -293,6 +325,11 @@ export namespace ptr
 		T* get() const
 		{
 			return _depot ? _depot->data : nullptr;
+		}
+		
+		T* operator->()
+		{
+			return get();
 		}
 	    
 	private:
