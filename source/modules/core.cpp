@@ -196,13 +196,14 @@ export
 	    
 	    coordinates<float> random_nearby(float radius)
 	    {
-	    	std::srand(static_cast<unsigned int>(std::time(0)));
-	    	
-	    	float angle = static_cast<float>(std::rand())/RAND_MAX*2*core_math::pi<float>;
-	    	
-	    	float random_radius = static_cast<float>(std::rand())/RAND_MAX*radius;
-	    	
-	    	return {this->x + random_radius * std::cos(angle), this->y + random_radius * std::sin(angle)};
+		    static std::mt19937 generator(static_cast<unsigned int>(std::time(0))); // Seed the generator once
+		    std::uniform_real_distribution<float> distribution_angle(0.0f, 2.0f * core_math::pi<float>);
+		    std::uniform_real_distribution<float> distribution_radius(0.0f, radius);
+		
+		    float angle = distribution_angle(generator);
+		    float random_radius = distribution_radius(generator);
+		
+		    return {this->x + random_radius * std::cos(angle), this->y + random_radius * std::sin(angle)};
 	    }
 	    
 	    coordinates<float> towards(coordinates<float> to_look_at)
@@ -344,6 +345,7 @@ export namespace ptr
 	{
 	public:
 		friend class depot<T>;
+		friend class watcher;
 		
 		// Create empty watcher
 		watcher() : _depot(nullptr)
@@ -392,6 +394,21 @@ export namespace ptr
 		
 		template <typename U>
 	    explicit watcher(const keeper<U>& to_watch)
+	    {
+			static_assert(std::is_base_of<U, T>::value || std::is_base_of<T, U>::value || std::is_same<U, T>::value,
+				"T and U must be in an inheritance relationship or be the same type");
+			_depot = reinterpret_cast<depot<T>*>(to_watch._depot);
+			if (_depot) {
+				_depot->attach_watcher();
+			}
+			else {
+				std::cerr << "Urgghhnnn...\n";
+				assert(false);
+			}
+	    }
+	    
+	    template <typename U>
+	    explicit watcher(const watcher<U>& to_watch)
 	    {
 			static_assert(std::is_base_of<U, T>::value || std::is_base_of<T, U>::value || std::is_same<U, T>::value,
 				"T and U must be in an inheritance relationship or be the same type");

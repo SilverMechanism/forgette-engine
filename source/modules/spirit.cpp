@@ -5,12 +5,15 @@ import core;
 import unit;
 import movement;
 import timers;
+import entity;
 
 export
 {
-	class Spirit
+	class Spirit : public Entity
 	{
 	public:
+		Spirit();
+		
 		ptr::watcher<Unit> vessel;
 		
 		float target_delta;
@@ -18,7 +21,7 @@ export
 		
 		coordinates<float> target_pos;
 		
-		void update();
+		virtual void game_update(float delta_time) override;
 		bool enabled = true;
 		bool target_active = false;
 		
@@ -27,8 +30,9 @@ export
 		
 		int th_rest = -1;
 		
-		void possess(ptr::keeper<Unit> new_unit);
-		void possess(ptr::watcher<Unit> new_unit);
+		void inhabit(ptr::keeper<Unit> new_unit);
+		void inhabit(ptr::watcher<Unit> new_unit);
+		
 	private:
 		bool should_retreat();
 		void retreat();
@@ -41,7 +45,12 @@ export
 	};
 }
 
-void Spirit::update()
+Spirit::Spirit()
+{
+	should_game_update = true;
+}
+
+void Spirit::game_update(float delta_time)
 {
 	if (!vessel.get())
 	{
@@ -95,10 +104,8 @@ bool Spirit::should_wander()
 			return true;
 		}
 	}
-	else
-	{
-		return false;
-	}
+	
+	return true;
 }
 
 void Spirit::wander()
@@ -121,12 +128,13 @@ void Spirit::wander()
 	if ((vessel->get_map_location() - target_pos).magnitude() < 3.0f)
 	{
 		target_active = false;
+		resting = true;
 		TimerManager* timer_manager = TimerManager::Instance();
-		th_rest = timer_manager->CreateTimer(10.0f, [this](){resting = false;});
+		th_rest = timer_manager->CreateTimer(3.0f, [this](){resting = false;});
 	}
 }
 
-void Spirit::possess(ptr::watcher<Unit> new_unit)
+void Spirit::inhabit(ptr::watcher<Unit> new_unit)
 {
 	if (new_unit.get())
 	{
@@ -135,7 +143,7 @@ void Spirit::possess(ptr::watcher<Unit> new_unit)
 	}
 }
 
-void Spirit::possess(ptr::keeper<Unit> new_unit)
+void Spirit::inhabit(ptr::keeper<Unit> new_unit)
 {
 	if (new_unit.get())
 	{

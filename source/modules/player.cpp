@@ -21,12 +21,14 @@ export
 		
 		bool locked_to_unit = true;
 		
-		void possess_unit(ptr::watcher<Entity> unit);
+		void possess_unit(ptr::watcher<Unit> unit);
 		
-		ptr::watcher<Entity> controlled_unit;
+		ptr::watcher<Unit> controlled_unit;
 		std::vector<InputBinding> input_bindings;
 		
 		coordinates<float> view_rotation;
+		
+		Unit* get_controlled_unit();
 	};
 }
 
@@ -47,16 +49,11 @@ void Player::game_update(float delta_time)
 {
 	if (locked_to_unit && controlled_unit.get())
 	{
-		set_map_location(controlled_unit->get_map_location());
-		// std::cout << "[PLAYER] Controlled unit ID: " << controlled_unit->id << "\nControlled unit POS: " << std::string(controlled_unit->get_map_location()) << "\n\n";
-	}
-	else
-	{
-		// std::cout << "No controlled unit" << std::endl;
+		ForgetteDirectX::set_render_viewpoint(controlled_unit->get_map_location());
 	}
 }
 
-void Player::possess_unit(ptr::watcher<Entity> unit)
+void Player::possess_unit(ptr::watcher<Unit> unit)
 {
 	if (!unit.get())
 	{
@@ -64,7 +61,7 @@ void Player::possess_unit(ptr::watcher<Entity> unit)
 		return;
 	}
 	
-	controlled_unit = ptr::watcher<Entity>(unit);
+	controlled_unit = ptr::watcher<Unit>(unit);
 	
 	if (InputHandler* ih = dynamic_cast<InputHandler*>(controlled_unit.get()))
 	{
@@ -77,4 +74,9 @@ void Player::possess_unit(ptr::watcher<Entity> unit)
 	}
 	
 	std::cout << "Attached to Entity " << controlled_unit.get()->id << std::endl;
+}
+
+Unit* Player::get_controlled_unit()
+{
+	return controlled_unit.get();
 }

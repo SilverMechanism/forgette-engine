@@ -1,4 +1,4 @@
-module;
+/* module;
 #include <cassert>
 export module sprite_entity;
 import core;
@@ -84,4 +84,4 @@ bool SpriteEntity::reload_sprite(bool strict, std::wstring new_image_path)
 	}
 	
 	return false;
-}
+} */

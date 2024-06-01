@@ -11,8 +11,6 @@ export
 	{
 	public:
 		Entity() = default;
-		void set_map_location(coordinates<float> new_location);
-		coordinates<float> get_map_location() const;
 
 		virtual void game_update(float delta_time);
 		virtual void render_update();
@@ -31,7 +29,6 @@ export
 		std::string display_name = "Entity";
 		
 	private:
-		coordinates<float> map_location {0.f, 0.f};
 	};
 }
 
@@ -43,16 +40,6 @@ bool Entity::initialize()
 void Entity::render_update()
 {
 
-}
-
-void Entity::set_map_location(coordinates<float> new_location)
-{
-	map_location = new_location;
-}
-
-coordinates<float> Entity::get_map_location() const
-{
-	return map_location;
 }
 
 void Entity::game_update(float delta_time)

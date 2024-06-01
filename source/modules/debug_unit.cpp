@@ -3,7 +3,6 @@ module;
 export module debug_unit;
 import core;
 import unit;
-import sprite_entity;
 import input;
 import std;
 import movement;

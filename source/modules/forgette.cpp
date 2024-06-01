@@ -16,6 +16,8 @@ import game_map;
 import debug_unit;
 import villager;
 import movement;
+import unit;
+import spirit;
 
 export namespace Forgette
 {
@@ -62,12 +64,11 @@ export namespace Forgette
 			spawn->id = entity_counter;
 			ptr::keeper<Entity> new_keeper(static_cast<Entity*>(spawn));
 			entities.push_back(std::move(new_keeper));
-
-#ifdef _DEBUG
-			std::println("Spawned {} at {}", spawn->get_display_name(), std::string(spawn->get_map_location()));
-#endif
-
-			spawn->set_map_location(world_location);
+			
+			if (Unit* unit = dynamic_cast<Unit*>(spawn))
+			{
+				unit->set_map_location(world_location);
+			}
 			spawn->on_spawn();
 			entity_counter++;
 			return ptr::watcher<Entity>(entities.back());
@@ -83,14 +84,10 @@ export namespace Forgette
 			const ptr::keeper<Entity> &my_keeper = entities.back();
 			new_watcher = ptr::watcher<T>(my_keeper);
 			
-			#ifdef _DEBUG
-				if (Entity* _spawn = new_watcher.get())
-				{
-					std::println("Spawned {} at {}", _spawn->get_display_name(), std::string(_spawn->get_map_location()));
-				}
-			#endif
-			
-			spawn->set_map_location(world_location);
+			if (Unit* unit = dynamic_cast<Unit*>(spawn))
+			{
+				unit->set_map_location(world_location);
+			}
 			spawn->on_spawn();
 			entity_counter++;
 			return ptr::watcher<Entity>(entities.back());
@@ -175,9 +172,18 @@ namespace Forgette
 		
 		spawn_entity<Player>(coordinates(0,0), local_player);
 		
-		local_player->possess_unit(ptr::watcher<Entity>(spawn_entity<DebugUnit>(coordinates(0, 0))));
+		ptr::watcher<DebugUnit> debug_unit;
+		spawn_entity<DebugUnit>(coordinates<float>(0, 0), debug_unit);
 		
-		spawn_entity<Villager>(coordinates(-100, -75));
+		local_player->possess_unit(ptr::watcher<Unit>(debug_unit));
+		
+		ptr::watcher<Villager> new_villager;
+		spawn_entity<Villager>(coordinates(-100, -75), new_villager);
+		
+		ptr::watcher<Spirit> new_spirit;
+		spawn_entity<Spirit>({0,0}, new_spirit);
+		
+		new_spirit->inhabit(ptr::watcher<Unit>(new_villager));
 		
 		lua_manager.get()->run_lua_script(script_path);
 		
@@ -196,7 +202,7 @@ namespace Forgette
 		
 		if (local_player.get())
 		{
-			ForgetteDirectX::set_render_viewpoint(local_player->get_map_location());
+			ForgetteDirectX::set_render_viewpoint(local_player->get_controlled_unit()->get_map_location());
 		}
 
 		ForgetteDirectX::prerender();
@@ -204,22 +210,20 @@ namespace Forgette
 		loop_functions[active_mode]();
 
 		ForgetteDirectX::present(true);
-		
-		if (local_player.get())
-		{
-			// std::cout << std::string(local_player->get_map_location()) << std::endl;
-		}
 	}
 	
 	bool z_compare(const ptr::keeper<Entity> &a, const ptr::keeper<Entity> &b)
 	{
-		if (!(a.get() && b.get()))
+		Unit* unit1 = dynamic_cast<Unit*>(a.get());
+		Unit* unit2 = dynamic_cast<Unit*>(b.get());
+		
+		if (!unit1 || !unit2)
 		{
 			return false;
 		}
 		
-		auto map_location_a = a.get()->get_map_location().isometric();
-		auto map_location_b = b.get()->get_map_location().isometric();
+		auto map_location_a = unit1->get_map_location().isometric();
+		auto map_location_b = unit2->get_map_location().isometric();
 			
 		if (map_location_a.y == map_location_b.y) 
 		{

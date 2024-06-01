@@ -15,7 +15,7 @@ export
 			should_render_update = true;
 		}
 		
-		std::vector<ptr::watcher<Entity>> welded_entities;
+		std::vector<ptr::watcher<Unit>> welded_units;
 		
 		virtual void render_update() override;
 		virtual void game_update(float delta_time) override;
@@ -30,6 +30,10 @@ export
 		
 		float health = 100.f;
 		
+		coordinates<float> map_location;
+		coordinates<float> get_map_location() const;
+		void set_map_location(coordinates<float> new_map_location);
+		
 	protected:
 		ptr::keeper<Sprite> sprite;
 		std::string sprite_name;
@@ -40,11 +44,11 @@ export
 
 void Unit::game_update(float delta_time)
 {
-	for (auto &entity : welded_entities)
+	for (auto &unit : welded_units)
 	{
-		if (Entity* welded_entity = entity.get())
+		if (Unit* welded_unit = unit.get())
 		{
-			welded_entity->set_map_location(get_map_location());
+			welded_unit->set_map_location(get_map_location());
 		}
 	}
 }
@@ -80,4 +84,14 @@ std::string Unit::get_sprite_name()
 void Unit::on_spawn()
 {
 	set_sprite(sprite_name);
+}
+
+coordinates<float> Unit::get_map_location() const
+{
+	return map_location;
+}
+
+void Unit::set_map_location(coordinates<float> new_location)
+{
+	map_location = new_location;
 }
