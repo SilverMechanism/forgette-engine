@@ -157,6 +157,9 @@ namespace ForgetteDirectX
 		coordinates<float> resolution = get_resolution();
 		coordinates<float> screen_coords;
 		
+		world_coords.x = (world_coords.x - render_viewpoint.x);
+		world_coords.y = (world_coords.y - render_viewpoint.y);
+		
 		world_coords = world_coords.isometric();
 		
 		screen_coords.x = world_coords.x + (resolution.x/2);
@@ -173,7 +176,9 @@ namespace ForgetteDirectX
 		world_coords.x = screen_coords.x - (resolution.x/2);
 		world_coords.y = screen_coords.y - (resolution.y/2);
 		
-		return world_coords.world();
+		world_coords = world_coords.world();
+		
+		return world_coords + render_viewpoint;
 	}
 	
 	ID2D1GradientStopCollection* pGradientStops = nullptr;
@@ -236,10 +241,10 @@ namespace ForgetteDirectX
 		coordinates<float> delta;
 		coordinates<float> screen_coords;
 		
-		delta.x = (map_location.x - render_viewpoint.x);
-		delta.y = (map_location.y - render_viewpoint.y);
+		// delta.x = (map_location.x - render_viewpoint.x);
+		// delta.y = (map_location.y - render_viewpoint.y);
 		
-		screen_coords = world_to_screen(delta);
+		screen_coords = world_to_screen(map_location);
 		
 		if (screen_coords.x-dimensions.x > resolution.x || screen_coords.x+dimensions.x < 0)
 		{

@@ -31,7 +31,11 @@ Villager::Villager()
 
 void Villager::game_update(float delta_time)
 {
-	DebugUnit::game_update(delta_time);
+	set_sprite_direction();
+	
+	sprite_sheet->update_sprite_atlas(frame);
+	
+	set_map_location(movement.apply_velocity(get_map_location(), delta_time));
 }
 
 void Villager::bind_inputs(std::vector<InputBinding> inputs)

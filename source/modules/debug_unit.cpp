@@ -8,6 +8,7 @@ import std;
 import movement;
 import input_handler;
 import sprite_sheet;
+import directx;
 
 std::unordered_map<std::string, std::uint8_t> angles =
 {
@@ -40,8 +41,14 @@ export
 		ptr::keeper<SpriteSheet> sprite_sheet;
 		
 		int frame = 0;
-	private:
+		
+		int to_sheet_frame(coordinates<float> vec);
+		
+	protected:
 		void set_sprite_direction();
+		void set_sprite_direction_mouse();
+		
+	private:
 	};
 }
 
@@ -80,10 +87,14 @@ void DebugUnit::game_update(float delta_time)
 {
 	Unit::game_update(delta_time);
 	
-	if (sprite_sheet.get() && sprite.get() && movement.velocity.magnitude() > 40)
+	/* if (sprite_sheet.get() && sprite.get() && movement.velocity.magnitude() > 40)
 	{
 		set_sprite_direction();
-	}
+	} */
+	
+	set_sprite_direction_mouse();
+	
+	sprite_sheet->update_sprite_atlas(frame);
 	
 	set_map_location(movement.apply_velocity(get_map_location(), delta_time));
 }
@@ -108,77 +119,63 @@ void DebugUnit::on_spawn()
 
 void DebugUnit::set_sprite_direction()
 {
-    if (!(movement.movement_input.x == 0 && movement.movement_input.y == 0))
+    /* if (!(movement.movement_input.x == 0 && movement.movement_input.y == 0))
     {
-	    constexpr double angle_threshold = core_math::tan(core_math::pi<float> / 8.0); // 22.5 degrees in radians
+    	frame = to_sheet_frame(movement.movement_input);
+    } */
+    
+    frame = to_sheet_frame(movement.velocity.isometric().normalize());
+}
+
+void DebugUnit::set_sprite_direction_mouse()
+{
+	coordinates<float> vec = ForgetteDirectX::world_to_screen(get_map_location());
+	vec = vec.towards(input::get_cursor_screen_location()).normalize();
 	
-	    if (std::fabs(movement.movement_input.y) > std::fabs(movement.movement_input.x))
-	    {
-	        if (movement.movement_input.y > 0)
-	        {
-	            if (movement.movement_input.x > angle_threshold * movement.movement_input.y)
-	            {
-	                frame = angles["up_right"];
-	            }
-	            else if (movement.movement_input.x < -angle_threshold * movement.movement_input.y)
-	            {
-	                frame = angles["up_left"];
-	            }
-	            else
-	            {
-	                frame = angles["up"];
-	            }
-	        }
-	        else
-	        {
-	            if (movement.movement_input.x > angle_threshold * -movement.movement_input.y)
-	            {
-	                frame = angles["down_right"];
-	            }
-	            else if (movement.movement_input.x < -angle_threshold * -movement.movement_input.y)
-	            {
-	                frame = angles["down_left"];
-	            }
-	            else
-	            {
-	                frame = angles["down"];
-	            }
-	        }
-	    }
-	    else
-	    {
-	        if (movement.movement_input.x > 0)
-	        {
-	            if (movement.movement_input.y > angle_threshold * movement.movement_input.x)
-	            {
-	                frame = angles["up_right"];
-	            }
-	            else if (movement.movement_input.y < -angle_threshold * movement.movement_input.x)
-	            {
-	                frame = angles["down_right"];
-	            }
-	            else
-	            {
-	                frame = angles["right"];
-	            }
-	        }
-	        else
-	        {
-	            if (movement.movement_input.y > angle_threshold * -movement.movement_input.x)
-	            {
-	                frame = angles["up_left"];
-	            }
-	            else if (movement.movement_input.y < -angle_threshold * -movement.movement_input.x)
-	            {
-	                frame = angles["down_left"];
-	            }
-	            else
-	            {
-	                frame = angles["left"];
-	            }
-	        }
-	    }
-    }
+	// coordinates<float> vec = get_map_location().towards(input::get_cursor_map_location()).isometric().normalize();
+	frame = to_sheet_frame(vec);
+}
+
+int DebugUnit::to_sheet_frame(coordinates<float> vec)
+{
+	if (!vec)
+	{
+		return frame;
+	}
 	
-    sprite_sheet->update_sprite_atlas(frame);
+	double angle = std::atan2(vec.y, vec.x);
+	angle = core_math::normalize_angle(angle + (core_math::pi<float>/8));
+	double segment = core_math::pi<float> / 4.0f;
+	int segment_number = static_cast<int>(angle/segment);
+	
+	switch (segment_number)
+	{
+		case 0:
+			return angles["right"];
+			break;
+		case 1:
+			return angles["down_right"];
+			break;
+		case 2:
+			return angles["down"];
+			break;
+		case 3:
+			return angles["down_left"];
+			break;
+		case 4:
+			return angles["left"];
+			break;
+		case 5:
+			return angles["up_left"];
+			break;
+		case 6:
+			return angles["up"];
+			break;
+		case 7:
+			return angles["up_right"];
+			break;
+		default:
+			return frame;
+			break;
+	}
 }

@@ -21,6 +21,65 @@ export namespace core_math
         const double denominator = 135135.0 - x2 * (62370.0 + x2 * (3150.0 + x2 * (28.0)));
         return numerator / denominator;
     }
+    
+    constexpr double atan(double x)
+    {
+        constexpr double a1 = 0.999866;
+        constexpr double a3 = -0.3302995;
+        constexpr double a5 = 0.180141;
+        constexpr double a7 = -0.085133;
+
+        double x2 = x * x;
+        return x * (a1 + a3 * x2 + a5 * x2 * x2 + a7 * x2 * x2 * x2);
+    }
+
+    constexpr double atan2(double y, double x)
+    {
+        if (x > 0)
+        {
+            return atan(y / x);
+        }
+        else if (x < 0 && y >= 0)
+        {
+            return atan(y / x) + pi<double>;
+        }
+        else if (x < 0 && y < 0)
+        {
+            return atan(y / x) - pi<double>;
+        }
+        else if (x == 0 && y > 0)
+        {
+            return pi<double> / 2.0;
+        }
+        else if (x == 0 && y < 0)
+        {
+            return -pi<double> / 2.0;
+        }
+        return 0.0; // x == 0 && y == 0
+    }
+
+    constexpr double to_degrees(double radians)
+    {
+        return radians * (180.0 / pi<double>);
+    }
+
+    constexpr double normalize_angle(double angle)
+    {
+		while (angle < 0)
+	    {
+	        angle += 2 * pi<double>;
+	    }
+	    while (angle >= 2 * pi<double>)
+	    {
+	        angle -= 2 * pi<double>;
+	    }
+	    return angle;
+    }
+    
+    bool nearly_zero(float value, float epsilon = 1e-16f)
+    {
+    	return std::fabs(value) < epsilon;
+    }
 }
 
 std::wstring get_exe_path()
@@ -58,6 +117,7 @@ void set_exe_path(std::wstring new_path)
 
 constexpr float tile_x = 256;
 constexpr float tile_y = 128;
+constexpr float tile_size = 36;
 
 // Helper type trait to check if a type is in a list of types
 template<typename T, typename... Types>
@@ -96,12 +156,12 @@ export
 		
 		coordinates<float> isometric()
 		{
-			return {((x + y)*tile_x/2)/36, ((x - y)*tile_y/2)/36};
+			return {((x + y)*tile_x/2)/tile_size, ((x - y)*tile_y/2)/tile_size};
 		}
 		
 		coordinates<float> world()
 		{
-			return {(x*36/tile_x/2)-y, (x*36/tile_y/2)+y};
+			return {(x*tile_size/tile_x/2)-y, (x*tile_size/tile_y/2)+y};
 		}
 		
 		coordinates<float> view_isometric()
