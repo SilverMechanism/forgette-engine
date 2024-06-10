@@ -90,7 +90,7 @@ export namespace Forgette
 			}
 			spawn->on_spawn();
 			entity_counter++;
-			return ptr::watcher<Entity>(entities.back());
+			return ptr::watcher<Entity>(my_keeper);
 		}
 		
 		ptr::keeper<LuaManager> lua_manager = ptr::keeper<LuaManager>(nullptr);
@@ -200,10 +200,10 @@ namespace Forgette
 			pair.second.key_down_bindings[0]();
 		}
 		
-		if (local_player.get())
+		/* if (local_player.get())
 		{
 			ForgetteDirectX::set_render_viewpoint(local_player->get_controlled_unit()->get_map_location());
-		}
+		} */
 
 		ForgetteDirectX::prerender();
 		
@@ -335,7 +335,7 @@ namespace Forgette
 			
 			if (entity.get()->should_render_update) 
 			{ 
-				entity.get()->render_update(); 
+				entity.get()->render_update();
 			}
 		}
 	}

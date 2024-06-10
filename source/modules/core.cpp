@@ -12,7 +12,15 @@ static std::wstring exe_path;
 export namespace core_math
 {
 	template <class T>
-	constexpr T pi = static_cast<T>(3.141592653589793);
+	constexpr T pi = T(3.141592653589793);
+	
+	constexpr double tan(double x)
+    {
+        const double x2 = x * x;
+        const double numerator = x * (135135.0 + x2 * (17325.0 + x2 * (378.0 + x2)));
+        const double denominator = 135135.0 - x2 * (62370.0 + x2 * (3150.0 + x2 * (28.0)));
+        return numerator / denominator;
+    }
 }
 
 std::wstring get_exe_path()
@@ -47,6 +55,9 @@ void set_exe_path(std::wstring new_path)
 {
 	exe_path = new_path;
 }
+
+constexpr float tile_x = 256;
+constexpr float tile_y = 128;
 
 // Helper type trait to check if a type is in a list of types
 template<typename T, typename... Types>
@@ -85,12 +96,12 @@ export
 		
 		coordinates<float> isometric()
 		{
-			return {((x + y)*64)/36, ((x - y)*32)/36};
+			return {((x + y)*tile_x/2)/36, ((x - y)*tile_y/2)/36};
 		}
 		
 		coordinates<float> world()
 		{
-			return {(x*36/64)-y, (x*36/32)+y};
+			return {(x*36/tile_x/2)-y, (x*36/tile_y/2)+y};
 		}
 		
 		coordinates<float> view_isometric()

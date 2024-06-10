@@ -15,14 +15,16 @@ export
 		virtual void bind_inputs(std::vector<InputBinding> inputs) override;
 		
 		virtual void game_update(float delta_time) override;
+		
+		virtual void on_spawn() override;
 	private:
 	};
 }
 
 Villager::Villager()
 {
+	sprite_name = "chicken-beast";
 	display_name = "Villager";
-	sprite_name = "nona";
 
 	should_game_update = true;
 }
@@ -35,4 +37,11 @@ void Villager::game_update(float delta_time)
 void Villager::bind_inputs(std::vector<InputBinding> inputs)
 {
 	
+}
+
+void Villager::on_spawn()
+{
+	sprite = ptr::keeper<Sprite>(new Sprite(sprite_name));
+	sprite_sheet = ptr::keeper<SpriteSheet>(new SpriteSheet(sprite_name, sprite));
+	sprite->draw_size = {96, 192};
 }

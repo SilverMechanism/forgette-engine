@@ -49,7 +49,10 @@ void Player::game_update(float delta_time)
 {
 	if (locked_to_unit && controlled_unit.get())
 	{
-		ForgetteDirectX::set_render_viewpoint(controlled_unit->get_map_location());
+		coordinates<float> render_pos = controlled_unit->get_map_location();
+		coordinates<float> draw_size = controlled_unit->sprite->draw_size;
+		render_pos = {render_pos.x-draw_size.y/4, render_pos.y+draw_size.y/4};
+		ForgetteDirectX::set_render_viewpoint(render_pos);
 	}
 }
 

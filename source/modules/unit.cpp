@@ -22,6 +22,7 @@ export
 		
 		void set_sprite(std::string new_sprite_name);
 		std::string get_sprite_name();
+		ptr::keeper<Sprite> sprite;
 		
 		virtual void on_spawn() override;
 		
@@ -33,9 +34,8 @@ export
 		coordinates<float> map_location;
 		coordinates<float> get_map_location() const;
 		void set_map_location(coordinates<float> new_map_location);
-		
 	protected:
-		ptr::keeper<Sprite> sprite;
+		
 		std::string sprite_name;
 		
 	private:
@@ -59,11 +59,13 @@ void Unit::render_update()
 	{
 		sprite_ptr->render_to_map(get_map_location(), true);
 	}
+	
+	// std::cout << "Entity " << id << " using location for rendering: " << std::string(get_map_location()) << std::endl;
 }
 
 void Unit::set_sprite(std::string new_sprite_name)
 {	
-	if (!sprite.get())
+	/* if (!sprite.get())
 	{
 		Sprite* new_sprite = new Sprite(new_sprite_name);
 		sprite = ptr::keeper<Sprite>(new_sprite);
@@ -73,7 +75,7 @@ void Unit::set_sprite(std::string new_sprite_name)
 		sprite.get()->load(new_sprite_name);
 	}
 	
-	sprite_name = new_sprite_name;
+	sprite_name = new_sprite_name; */
 }
 
 std::string Unit::get_sprite_name()
@@ -83,7 +85,7 @@ std::string Unit::get_sprite_name()
 
 void Unit::on_spawn()
 {
-	set_sprite(sprite_name);
+	// set_sprite(sprite_name);
 }
 
 coordinates<float> Unit::get_map_location() const

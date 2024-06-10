@@ -20,10 +20,10 @@ export
 		Sprite();
 		
 		Sprite(std::string sprite_name);
+		Sprite(std::string sprite_name, coordinates<float> _draw_size);
 		Sprite(std::string sprite_name, coordinates<int> _atlas_location, coordinates<int> _atlas_size);
 		
 		Sprite(std::wstring sprite_path);
-		Sprite(std::wstring sprite_path, coordinates<int> _atlas_location, coordinates<int> _atlas_size);
 		
 		// Load the image from disk, returns false if failed
 		bool load(std::string sprite_name);
@@ -35,7 +35,7 @@ export
 		coordinates<float> draw_size;
 		
 		// Returns a negative number if it could not be retrieved
-		coordinates<float> get_dimensions();
+		coordinates<float> get_image_dimensions();
 		
 		void render_to_screen(coordinates<float> screen_location);
 		
@@ -59,16 +59,16 @@ Sprite::Sprite(std::string sprite_name, coordinates<int> _atlas_location, coordi
 	atlas_size = _atlas_size;
 }
 
-Sprite::Sprite(std::wstring sprite_path, coordinates<int> _atlas_location, coordinates<int> _atlas_size) :
-	Sprite(sprite_path)
-{
-	atlas_location = _atlas_location;
-	atlas_size = _atlas_size;
-}
-
 #ifdef WIN64
 Sprite::Sprite(std::string sprite_name)
 {
+	assert(load(sprite_name));
+	draw_size = get_image_dimensions();
+}
+
+Sprite::Sprite(std::string sprite_name, coordinates<float> _draw_size)
+{
+	draw_size = _draw_size;
 	assert(load(sprite_name));
 }
 
@@ -80,7 +80,7 @@ Sprite::Sprite(std::wstring sprite_path)
 bool Sprite::load(std::string sprite_name)
 {
 	std::string sprite_path = database::get_sprite_path(sprite_name);
-	image = ptr::keeper<GFX::raw_image>(GFX::load_image_file(string_to_wstring(sprite_path)));
+	image = ptr::keeper<GFX::raw_image>(GFX::load_image_file(get_exe_dir() + string_to_wstring(sprite_path)));
 	return image.get();
 }
 
@@ -91,7 +91,7 @@ bool Sprite::load(std::wstring sprite_path)
 	return image.get();
 }
 
-coordinates<float> Sprite::get_dimensions()
+coordinates<float> Sprite::get_image_dimensions()
 {
 	coordinates<float> dimensions;
 	
@@ -129,23 +129,23 @@ void Sprite::render_to_map(coordinates<float> map_location, bool force_render/*,
 	
 	if (image.get())
 	{
-		if (atlas_size && atlas_location)
+		if (atlas_size)
 		{
-			/* ForgetteDirectX::draw_sprite_to_map
+			ForgetteDirectX::draw_sprite_to_map
 			(
 				image.get(),
 				draw_size,
 				map_location,
 				atlas_location,
-				atlas_size 
-			); */
+				atlas_size
+			);
 		}
 		else
 		{
 			ForgetteDirectX::draw_sprite_to_map
 			(
 				image.get(), 
-				get_dimensions(), 
+				draw_size, 
 				map_location
 			);
 		}

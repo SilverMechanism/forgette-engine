@@ -61,6 +61,15 @@ export namespace database
 	TileDefinition tiles_get_entry(std::string name);
 	
 	std::string get_sprite_path(std::string sprite_name);
+	
+	struct regular_sheet
+	{
+		std::string path;
+		int x;
+		int y;
+	};
+	
+	regular_sheet get_sprite_sheet(std::string sprite_name);
 }
 
 void database::print_db(std::wstring path)
@@ -165,5 +174,33 @@ namespace database
 		}
 		
 		return sprite_path;
+	}
+	
+	regular_sheet get_sprite_sheet(std::string sprite_name)
+	{
+		regular_sheet sheet;
+		
+		std::string db_path = make_db_path("sprites");
+		SQLite::Database db(db_path, SQLite::OPEN_READWRITE);
+		
+		SQLite::Statement query(db, "SELECT s.path, r.x_size, r.y_size "
+                               "FROM sprites s "
+                               "JOIN regular_sheet r ON s.name = r.name "
+                               "WHERE s.name = ?");
+		
+		query.bind(1, sprite_name);
+		
+		if (query.executeStep())
+		{
+			sheet.path = query.getColumn(0).getString();
+			sheet.x = query.getColumn(1).getInt();
+			sheet.y = query.getColumn(2).getInt();
+		}
+		else
+		{
+			assert("Failed to retrieve sprite sheet from database");
+		}
+		
+		return sheet;
 	}
 }

@@ -109,9 +109,7 @@ bool Spirit::should_wander()
 }
 
 void Spirit::wander()
-{	
-	vessel->movement.movement_input = {0, 0};
-	
+{
 	if (resting)
 	{
 		return;
@@ -139,6 +137,7 @@ void Spirit::inhabit(ptr::watcher<Unit> new_unit)
 	if (new_unit.get())
 	{
 		vessel = ptr::watcher<Unit>(new_unit);
+		std::cout << "Spirit inhabited Entity " << new_unit->id << std::endl;
 		enabled = true;
 	}
 }
@@ -148,6 +147,7 @@ void Spirit::inhabit(ptr::keeper<Unit> new_unit)
 	if (new_unit.get())
 	{
 		vessel = ptr::watcher<Unit>(new_unit);
+		std::cout << "Spirit inhabited Entity " << new_unit->id << std::endl;
 		enabled = true;
 	}
 }
