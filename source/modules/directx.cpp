@@ -183,44 +183,22 @@ namespace ForgetteDirectX
 	
 	ID2D1GradientStopCollection* pGradientStops = nullptr;
 	ID2D1RadialGradientBrush* pRadialGradientBrush = nullptr;
+	D2D1_MATRIX_3X2_F shadow_rotation;
 
 	void draw_unit_shadow(coordinates<float> map_location, float radius)
 	{
-		D2D1_GRADIENT_STOP gradientStops[3];
-		gradientStops[0].color = D2D1::ColorF(D2D1::ColorF::Black, 0.5f); // Opaque black at the center
-		gradientStops[0].position = 0.0f;
-		gradientStops[1].color = D2D1::ColorF(D2D1::ColorF::Black, 0.2f); // Opaque black at the center
-		gradientStops[1].position = 0.8f;
-		gradientStops[2].color = D2D1::ColorF(D2D1::ColorF::Black, 0.0f); // Transparent black at the edges
-		gradientStops[2].position = 1.0f;
-
-		HRESULT hr = d2d1_render_target->CreateGradientStopCollection(
-		    gradientStops,
-		    3,
-		    &pGradientStops
-		);
-		
 		D2D1_POINT_2F gradientCenter = D2D1::Point2F(map_location.x, map_location.y); // Center of the gradient
 	    D2D1_POINT_2F gradientOriginOffset = D2D1::Point2F(0, 0); // No offset
 	    FLOAT gradientRadiusX = 35.0f; // X radius
 	    FLOAT gradientRadiusY = 25.0f; // Y radius
-	
-	    // Create the radial gradient brush
-	    hr = d2d1_render_target->CreateRadialGradientBrush(
-	        D2D1::RadialGradientBrushProperties(
-	            gradientCenter,
-	            gradientOriginOffset,
-	            gradientRadiusX,
-	            gradientRadiusY
-	        ),
-	        pGradientStops,
-	        &pRadialGradientBrush
-	    );
 	    
-	    D2D1_MATRIX_3X2_F skewMatrix = D2D1::Matrix3x2F::Skew(-45.0f, 0.0f, gradientCenter);
-	    D2D1_MATRIX_3X2_F rotation_matrix = D2D1::Matrix3x2F::Rotation(-45.0f, gradientCenter);
-	    
-        d2d1_render_target->SetTransform(rotation_matrix);
+	    shadow_rotation = D2D1::Matrix3x2F::Rotation(-45.0f, gradientCenter);
+        d2d1_render_target->SetTransform(shadow_rotation);
+        
+        pRadialGradientBrush->SetCenter(gradientCenter);
+        pRadialGradientBrush->SetGradientOriginOffset(gradientOriginOffset);
+        pRadialGradientBrush->SetRadiusX(gradientRadiusX);
+        pRadialGradientBrush->SetRadiusY(gradientRadiusY);
         
 	     d2d1_render_target->FillEllipse(
             D2D1::Ellipse(D2D1::Point2F(map_location.x, map_location.y), 60, 30),
@@ -276,22 +254,28 @@ namespace ForgetteDirectX
 		    d2d1_render_target->SetTransform(transform);
 		}
 		
-		D2D1_RECT_F* atlas_rect_ptr = nullptr;
 		D2D1_RECT_F atlas_rect = D2D1::RectF(
 				atlas_location.x, atlas_location.y,
 				atlas_location.x+atlas_dimensions.x, atlas_location.y+atlas_dimensions.y);
-				
+		
 		if (atlas_dimensions)
 		{
-			atlas_rect_ptr = &atlas_rect;
+			d2d1_render_target->DrawBitmap(
+				bitmap,
+				draw_rect, 
+				1.0f,
+				default_interp_mode, 
+				&atlas_rect);
 		}
-		
-		d2d1_render_target->DrawBitmap(
-			bitmap,
-			draw_rect, 
-			1.0f,
-			default_interp_mode, 
-			atlas_rect_ptr);
+		else
+		{
+			d2d1_render_target->DrawBitmap(
+					bitmap,
+					draw_rect, 
+					1.0f,
+					default_interp_mode, 
+					NULL);
+		}
 			
 		d2d1_render_target->SetTransform(D2D1::Matrix3x2F::Identity());
 	}
@@ -628,6 +612,27 @@ namespace ForgetteDirectX
 		
 		d2d1_device_context->CreateEffect(CLSID_D2D1PointSpecular, &specular);
 		
+		D2D1_GRADIENT_STOP gradientStops[3];
+		gradientStops[0].color = D2D1::ColorF(D2D1::ColorF::Black, 0.5f); // Opaque black at the center
+		gradientStops[0].position = 0.0f;
+		gradientStops[1].color = D2D1::ColorF(D2D1::ColorF::Black, 0.2f); // Opaque black at the center
+		gradientStops[1].position = 0.8f;
+		gradientStops[2].color = D2D1::ColorF(D2D1::ColorF::Black, 0.0f); // Transparent black at the edges
+		gradientStops[2].position = 1.0f;
+
+		hr = d2d1_render_target->CreateGradientStopCollection(
+		    gradientStops,
+		    3,
+		    &pGradientStops
+		);
+	
+	    // Create the radial gradient brush
+	    hr = d2d1_render_target->CreateRadialGradientBrush(
+	        D2D1::RadialGradientBrushProperties(D2D1::Point2F(0, 0), D2D1::Point2F(0, 0), 0, 0),
+	        pGradientStops,
+	        &pRadialGradientBrush
+	    );
+	    
 		std::cout << "DirectX initialized successfully." << std::endl;
 		
 		return true;

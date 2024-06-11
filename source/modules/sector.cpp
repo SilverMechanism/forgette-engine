@@ -2,6 +2,7 @@ module;
 export module sector;
 import std;
 import entity;
+import core;
 
 export
 {

@@ -10,7 +10,7 @@ import input_handler;
 import sprite_sheet;
 import directx;
 
-std::unordered_map<std::string, std::uint8_t> angles =
+const std::unordered_map<std::string, std::uint8_t> angles =
 {
 	{"down", 1},
 	{"down_left", 2},
@@ -119,11 +119,6 @@ void DebugUnit::on_spawn()
 
 void DebugUnit::set_sprite_direction()
 {
-    /* if (!(movement.movement_input.x == 0 && movement.movement_input.y == 0))
-    {
-    	frame = to_sheet_frame(movement.movement_input);
-    } */
-    
     frame = to_sheet_frame(movement.velocity.isometric().normalize());
 }
 
@@ -151,28 +146,28 @@ int DebugUnit::to_sheet_frame(coordinates<float> vec)
 	switch (segment_number)
 	{
 		case 0:
-			return angles["right"];
+			return 7;
 			break;
 		case 1:
-			return angles["down_right"];
+			return 8;
 			break;
 		case 2:
-			return angles["down"];
+			return 1;
 			break;
 		case 3:
-			return angles["down_left"];
+			return 2;
 			break;
 		case 4:
-			return angles["left"];
+			return 3;
 			break;
 		case 5:
-			return angles["up_left"];
+			return 4;
 			break;
 		case 6:
-			return angles["up"];
+			return 5;
 			break;
 		case 7:
-			return angles["up_right"];
+			return 6;
 			break;
 		default:
 			return frame;

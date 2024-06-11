@@ -1,6 +1,7 @@
 module;
 export module logger;
 import std;
+import core;
 
 export namespace logger
 {

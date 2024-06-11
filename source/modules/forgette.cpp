@@ -333,6 +333,7 @@ namespace Forgette
 				// std::println("Did not run game update for {}", entity.get()->get_display_name());
 			}
 			
+			
 			if (entity.get()->should_render_update) 
 			{ 
 				entity.get()->render_update();

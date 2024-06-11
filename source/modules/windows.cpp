@@ -9,6 +9,7 @@ module;
 #endif
 export module windows;
 import std;
+import core;
 
 export namespace win_compat
 {

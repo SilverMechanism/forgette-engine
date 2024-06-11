@@ -259,6 +259,27 @@ class WO_RawInputObserver : public win_compat::WindowObserver
 				}
 				
 				cursor_location = {static_cast<float>(absolute_position.x), static_cast<float>(absolute_position.y)};
+				
+				if (GetForegroundWindow() == win_compat::Window::instance().handle)
+				{
+					coordinates<int> resolution = ForgetteDirectX::get_resolution();
+					int center_x = resolution.x / 2;
+					int center_y = resolution.y / 2;
+	
+					float dx = cursor_location.x - center_x;
+					float dy = cursor_location.y - center_y;
+					float manhattan_distance = std::fabs(dx) + std::fabs(dy); // Maybe we can use sqrt for this, I don't know the real perf implication
+	
+					const float max_distance = 100.0f; // "Circle" radius (really a diamond)
+	
+					if (manhattan_distance > max_distance)
+					{
+						float ratio = max_distance / manhattan_distance;
+						int clamped_x = static_cast<int>(center_x + dx * ratio);
+						int clamped_y = static_cast<int>(center_y + dy * ratio);
+						SetCursorPos(clamped_x, clamped_y);
+					}
+				}
 			}
 			break;
 		}

@@ -1,5 +1,6 @@
 module;
 export module action;
+import core;
 
 export
 {

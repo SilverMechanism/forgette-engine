@@ -44,6 +44,7 @@ export
 		GFX::raw_image* get_image();
 	private:
 		ptr::keeper<GFX::raw_image> image;
+		coordinates<float> dimensions;
 	};
 }
 
@@ -93,11 +94,14 @@ bool Sprite::load(std::wstring sprite_path)
 
 coordinates<float> Sprite::get_image_dimensions()
 {
-	coordinates<float> dimensions;
+	if (dimensions)
+	{
+		return dimensions;
+	}
 	
 	if (atlas_size)
 	{
-		coordinates<float> dimensions = {static_cast<float>(atlas_size.x), static_cast<float>(atlas_size.y)};
+		dimensions = {static_cast<float>(atlas_size.x), static_cast<float>(atlas_size.y)};
 	}
 	else if (image.get())
 	{

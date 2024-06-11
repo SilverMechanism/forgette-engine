@@ -3,6 +3,7 @@ export module unit;
 import entity;
 import sprite;
 import movement;
+import core;
 
 export
 {

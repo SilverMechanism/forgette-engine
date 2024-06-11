@@ -126,8 +126,35 @@ struct is_one_of : std::false_type {};
 template<typename T, typename First, typename... Rest>
 struct is_one_of<T, First, Rest...> : std::conditional_t<std::is_same_v<T, First>, std::true_type, is_one_of<T, Rest...>> {};
 
+std::atomic_flag new_in_progress;
+
 export 
 {
+	void safePrint(const char* msg) {
+	    OutputDebugStringA(msg);
+	}
+
+	// Overload the new operator
+	void* operator new(std::size_t size) {
+	    if (new_in_progress.test_and_set()) {
+	        return std::malloc(size);
+	    }
+	
+	    void* ptr = std::malloc(size);
+	    if (!ptr) {
+	        new_in_progress.clear();  // Ensure flag is cleared if malloc fails
+	        throw std::bad_alloc();
+	    }
+	
+	    // Prepare the message to print
+	    char buffer[256];
+	    std::snprintf(buffer, sizeof(buffer), "Allocated %zu bytes at %p\n", size, ptr);
+	    safePrint(buffer);
+	
+	    new_in_progress.clear();  // Clear flag to allow further allocations
+	    return ptr;
+	}
+	
 	std::wstring get_exe_path();
 	std::wstring get_exe_dir();
 	void set_exe_path(std::wstring new_path);
@@ -354,7 +381,7 @@ export namespace ptr
 		// Default (empty)
 		keeper() noexcept : _depot(nullptr)
 		{
-
+			
 		}
 		
 		// From raw pointer
@@ -421,7 +448,7 @@ export namespace ptr
 		// Create empty watcher
 		watcher() : _depot(nullptr)
 		{
-			
+		
 		}
 		
 		// Construct by getting a depot from a keeper and watch it
@@ -554,7 +581,7 @@ class depot
 public:
 	virtual ~depot() {}
 	
-	explicit depot(T* new_data) : data(new_data) {}
+	explicit depot(T* new_data) : data(new_data) { std::cout << "Creating new depot" << std::endl; }
 	
 	T* data = nullptr;
 	int watcher_count = 0;

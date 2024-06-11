@@ -1,6 +1,7 @@
 module;
 export module state;
 import unit;
+import core;
 
 export
 {

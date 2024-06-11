@@ -1,5 +1,6 @@
 module;
 export module collision;
+import core;
 
 export
 {

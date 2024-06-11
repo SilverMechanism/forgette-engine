@@ -2,6 +2,7 @@ module;
 #include "windows.h"
 export module timers;
 import std;
+import core;
 
 struct Timer
 {

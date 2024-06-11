@@ -2,6 +2,7 @@ module;
 export module input_handler;
 import std;
 import input;
+import core;
 
 export
 {
