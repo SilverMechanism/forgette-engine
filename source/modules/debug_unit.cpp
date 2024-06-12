@@ -10,6 +10,8 @@ import input_handler;
 import sprite_sheet;
 import directx;
 import floating_text;
+import debug_device;
+import forgette;
 
 const std::unordered_map<std::string, std::uint8_t> angles =
 {
@@ -30,6 +32,8 @@ export
 	{
 	public:
 		DebugUnit();
+		
+		ptr::watcher<DebugDevice> debug_device;
 		
 		virtual void bind_inputs(std::vector<InputBinding> inputs) override;
 		
@@ -116,6 +120,8 @@ void DebugUnit::on_spawn()
 	sprite = ptr::keeper<Sprite>(new Sprite(sprite_name));
 	sprite_sheet = ptr::keeper<SpriteSheet>(new SpriteSheet(sprite_name, sprite));
 	sprite->draw_size = {96, 192};
+	
+	get_engine()->spawn_entity<DebugDevice>(debug_device);
 	
 	FloatingText::create("Spawned...", 16.0f, get_map_location(), 5.0f);
 }

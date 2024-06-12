@@ -1,3 +1,4 @@
+-- I'm going to have to rewrite all this logic for the module interfaces change..
 local exports = {}
 
 -- Specify the source directory
@@ -45,7 +46,10 @@ export
 			}
 			
 			coordinates coords = coordinates(static_cast<float>(lua_tonumber(L, 1)), static_cast<float>(lua_tonumber(L, 2)));
-		    lua_pushlightuserdata(L, get_engine()->spawn_entity<]] .. base_class .. [[>(coords).get());
+			
+			ptr::watcher<]] .. base_class .. [[> unit;
+			get_engine()->spawn_entity<]] .. base_class .. [[>(coords, unit);
+		    lua_pushlightuserdata(L, unit.get());
 		    
 		    return 1;
 		}

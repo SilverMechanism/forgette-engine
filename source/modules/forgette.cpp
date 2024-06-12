@@ -57,39 +57,70 @@ export namespace Forgette
 		std::map<std::uint8_t, std::vector<std::function<bool(float)>>> render_functions;
 		
 		template<typename T>
-		ptr::watcher<Entity> spawn_entity(coordinates<float> world_location)
+		void spawn_entity(coordinates<float> world_location)
 		{
 			T* spawn = new T();
 			spawn->id = entity_counter;
-			ptr::keeper<Entity> new_keeper(static_cast<Entity*>(spawn));
-			entities.push_back(std::move(new_keeper));
+			
+			ptr::keeper<Entity> keeper = ptr::keeper<Entity>(spawn);
 			
 			if (Unit* unit = dynamic_cast<Unit*>(spawn))
 			{
 				unit->set_map_location(world_location);
 			}
+			
+			entities.push_back(std::move(keeper));
+			
 			spawn->on_spawn();
 			entity_counter++;
-			return ptr::watcher<Entity>(entities.back());
 		}
 		
 		template<typename T>
-		ptr::watcher<Entity> spawn_entity(coordinates<float> world_location, ptr::watcher<T> &new_watcher)
+		void spawn_entity(coordinates<float> world_location, ptr::watcher<T> &new_watcher)
+		{
+			T* spawn = new T();
+			spawn->id = entity_counter;
+			
+			ptr::keeper<Entity> keeper = ptr::keeper<Entity>(spawn);
+			new_watcher = ptr::watcher<T>(keeper);
+			
+			if (Unit* unit = dynamic_cast<Unit*>(spawn))
+			{
+				unit->set_map_location(world_location);
+			}
+			
+			entities.push_back(std::move(keeper));
+			
+			spawn->on_spawn();
+			entity_counter++;
+		}
+		
+		template<typename T>
+		void spawn_entity(ptr::watcher<T> &new_watcher)
+		{
+			T* spawn = new T();
+			spawn->id = entity_counter;
+			
+			ptr::keeper<Entity> keeper = ptr::keeper<Entity>(spawn);
+			new_watcher = ptr::watcher<T>(keeper);
+			
+			entities.push_back(std::move(keeper));
+			
+			spawn->on_spawn();
+			entity_counter++;
+		}
+		
+		template<typename T>
+		void spawn_entity()
 		{
 			T* spawn = new T();
 			spawn->id = entity_counter;
 			entities.push_back(ptr::keeper<Entity>(spawn));
 			
 			const ptr::keeper<Entity> &my_keeper = entities.back();
-			new_watcher = ptr::watcher<T>(my_keeper);
 			
-			if (Unit* unit = dynamic_cast<Unit*>(spawn))
-			{
-				unit->set_map_location(world_location);
-			}
 			spawn->on_spawn();
 			entity_counter++;
-			return ptr::watcher<Entity>(my_keeper);
 		}
 		
 		ptr::keeper<LuaManager> lua_manager = ptr::keeper<LuaManager>(nullptr);

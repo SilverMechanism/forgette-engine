@@ -22,10 +22,12 @@ export
 		bool should_game_update = false;
 		bool should_render_update = false;
 		
-		coordinates<float> size {1.0f, 1.0f};
-		
 		std::int64_t id = -1;
 	protected:
+		// I would like to optimize this somehow
+		// Maybe make a constant base name
+		// and an empty string for a dynamic name
+		// Dynamic names should be quite unusual (i think)
 		std::string display_name = "Entity";
 		
 	private:
