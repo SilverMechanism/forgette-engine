@@ -75,8 +75,6 @@ void Player::possess_unit(ptr::watcher<Unit> unit)
 	{
 		unit_unit->movement.skew_input = true;
 	}
-	
-	std::cout << "Attached to Entity " << controlled_unit.get()->id << std::endl;
 }
 
 Unit* Player::get_controlled_unit()

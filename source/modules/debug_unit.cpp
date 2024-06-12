@@ -9,6 +9,7 @@ import movement;
 import input_handler;
 import sprite_sheet;
 import directx;
+import floating_text;
 
 const std::unordered_map<std::string, std::uint8_t> angles =
 {
@@ -115,6 +116,8 @@ void DebugUnit::on_spawn()
 	sprite = ptr::keeper<Sprite>(new Sprite(sprite_name));
 	sprite_sheet = ptr::keeper<SpriteSheet>(new SpriteSheet(sprite_name, sprite));
 	sprite->draw_size = {96, 192};
+	
+	FloatingText::create("Spawned...", 16.0f, get_map_location(), 5.0f);
 }
 
 void DebugUnit::set_sprite_direction()

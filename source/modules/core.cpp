@@ -581,7 +581,7 @@ class depot
 public:
 	virtual ~depot() {}
 	
-	explicit depot(T* new_data) : data(new_data) { std::cout << "Creating new depot" << std::endl; }
+	explicit depot(T* new_data) : data(new_data) {}
 	
 	T* data = nullptr;
 	int watcher_count = 0;

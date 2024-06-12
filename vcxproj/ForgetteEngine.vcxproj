@@ -15,6 +15,7 @@
     <ClCompile Include="..\source\*.h" />
     <ClCompile Include="..\source\modules\*.cpp" />
     <ClCompile Include="..\source\scriptables\*.cpp" />
+    <ClCompile Include="..\source\modules\*.ixx" />
   </ItemGroup>
   <ItemGroup>
     <None Include="..\source\pint_export.py" />

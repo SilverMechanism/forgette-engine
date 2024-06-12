@@ -12,12 +12,9 @@ import input;
 import core;
 import directx;
 import lua_manager;
-import game_map;
-import debug_unit;
-import villager;
 import movement;
 import unit;
-import spirit;
+import game_map;
 
 export namespace Forgette
 {
@@ -57,6 +54,8 @@ export namespace Forgette
 		
 		std::int64_t entity_counter = 0;
 		
+		std::map<std::uint8_t, std::vector<std::function<bool(float)>>> render_functions;
+		
 		template<typename T>
 		ptr::watcher<Entity> spawn_entity(coordinates<float> world_location)
 		{
@@ -94,11 +93,14 @@ export namespace Forgette
 		}
 		
 		ptr::keeper<LuaManager> lua_manager = ptr::keeper<LuaManager>(nullptr);
+		
+		Player* create_player();
 
 	private:
 		Mode active_mode = Mode::not_set;
 		std::map<Mode, std::function<void()>> loop_functions;
 		void map_loop();
+		void setup_map();
 		void menu_loop();
 		ptr::watcher<Player> local_player;
 	};
@@ -111,6 +113,12 @@ export
 }
 
 std::unique_ptr<Forgette::Engine> global_engine = nullptr;
+
+Player* Forgette::Engine::create_player()
+{
+	spawn_entity<Player>(coordinates(0,0), local_player);
+	return local_player.get();
+}
 
 Forgette::Engine* get_engine()
 {
@@ -138,6 +146,7 @@ namespace Forgette
 		timer_manager = TimerManager::Instance();
 		timer_manager->Initialize();
 		
+		loop_functions[Mode::not_set] = std::bind(&Engine::setup_map, this);
 		loop_functions[Mode::in_map] = std::bind(&Engine::map_loop, this);
 		
 		LuaManager* new_lua_manager = new LuaManager;
@@ -170,21 +179,6 @@ namespace Forgette
 		active_map = ptr::keeper<GameMap>(new_map);
 		active_map.get()->generate_flatmap("e", 128, 128);
 		
-		spawn_entity<Player>(coordinates(0,0), local_player);
-		
-		ptr::watcher<DebugUnit> debug_unit;
-		spawn_entity<DebugUnit>(coordinates<float>(0, 0), debug_unit);
-		
-		local_player->possess_unit(ptr::watcher<Unit>(debug_unit));
-		
-		ptr::watcher<Villager> new_villager;
-		spawn_entity<Villager>(coordinates(-100, -75), new_villager);
-		
-		ptr::watcher<Spirit> new_spirit;
-		spawn_entity<Spirit>({0,0}, new_spirit);
-		
-		new_spirit->inhabit(ptr::watcher<Unit>(new_villager));
-		
 		lua_manager.get()->run_lua_script(script_path);
 		
 		return;
@@ -192,6 +186,8 @@ namespace Forgette
 
 	void Engine::loop()
 	{
+		ForgetteDirectX::prerender();
+		
 		timer_manager->ParseTimers();
 		timer_manager->ProcessCallbacks();
 
@@ -204,8 +200,6 @@ namespace Forgette
 		{
 			ForgetteDirectX::set_render_viewpoint(local_player->get_controlled_unit()->get_map_location());
 		} */
-
-		ForgetteDirectX::prerender();
 		
 		loop_functions[active_mode]();
 
@@ -290,12 +284,16 @@ namespace Forgette
 	    }
 	}
 	
+	void Engine::setup_map()
+	{
+		std::wstring map_script_path = get_application_dir() + L"\\blood_fields.tofs";
+		load_game_map(map_script_path);
+	}
+	
 	void Engine::map_loop()
 	{
-		float delta_time = timer_manager->get_delta_time();
+		const float delta_time = timer_manager->get_delta_time();
 		
-		// coordinates<float> mouse_pos = input::get_cursor_map_location();
-		// std::cout << "Mouse position: (" << mouse_pos.x << ", " << mouse_pos.y << ")\n";
 		if (!active_map.get())
 		{
 			return;
@@ -338,6 +336,16 @@ namespace Forgette
 			{ 
 				entity.get()->render_update();
 			}
+		}
+		
+		for (auto& [priority, function_vector] : render_functions)
+		{
+			function_vector.erase(
+            	std::remove_if(function_vector.begin(), function_vector.end(), [delta_time](const std::function<bool(float)>& render_function) 
+            	{
+                	return !render_function(delta_time); // Remove functions that return false
+            	}), 
+            	function_vector.end());
 		}
 	}
 	

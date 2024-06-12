@@ -25,7 +25,6 @@ ComPtr<IDXGISwapChain1> swap_chain;
 ComPtr<ID2D1Factory1> d2d1_factory;
 ComPtr<ID2D1Device> d2d1_device;
 ComPtr<ID2D1DeviceContext> d2d1_device_context;
-ComPtr<ID2D1SolidColorBrush> sc_brush;
 std::unique_ptr<ID2D1Bitmap> logo;
 
 ComPtr<IWICBitmapDecoder> decoder;
@@ -33,11 +32,19 @@ ComPtr<IWICImagingFactory> wic_factory;
 ComPtr<IWICFormatConverter> tga_converter;
 
 ComPtr<IDWriteFactory5> dwrite_factory;
-ComPtr<IDWriteTextFormat> text_format;
-ComPtr<IDWriteTextLayout> text_layout;
 ComPtr<IDWriteFontFile> old_english_font_file;
 ComPtr<IDWriteFontFace> old_english_font_face;
 ComPtr<ID2D1Effect> specular;
+
+enum DrawStage
+{
+	none,
+	game,
+	ui,
+	present
+};
+
+DrawStage draw_stage = DrawStage::none;
 
 class WO_DestroyObserver : public win_compat::WindowObserver
 {
@@ -65,6 +72,10 @@ void check_hr(std::string message, HRESULT hr)
 
 export namespace ForgetteDirectX
 {
+	ComPtr<ID2D1SolidColorBrush> sc_brush;
+	
+	void draw_text(std::string text, coordinates<float> screen_position, float text_size);
+	
 	coordinates<float> world_to_screen(coordinates<float> world_coords);
 	coordinates<float> screen_to_world(coordinates<float> screen_coords);
 	
@@ -83,8 +94,20 @@ export namespace ForgetteDirectX
 	void set_zoom_level(float new_zoom_level);
 	
 	std::unique_ptr<ID2D1RenderTarget> d2d1_render_target;
+	std::unique_ptr<ID2D1BitmapRenderTarget> game_render_target;
+	std::unique_ptr<ID2D1BitmapRenderTarget> ui_render_target;
 	
 	ID2D1RenderTarget* get_render_target()
+	{
+		return d2d1_render_target.get();
+	}
+	
+	ID2D1RenderTarget* get_game_render_target()
+	{
+		return d2d1_render_target.get();
+	}
+	
+	ID2D1RenderTarget* get_ui_render_target()
 	{
 		return d2d1_render_target.get();
 	}
@@ -122,6 +145,47 @@ namespace ForgetteDirectX
 	coordinates<float> render_viewpoint;
 	coordinates<float> viewpoint_anchor;
 	float zoom_level {1.0f};
+	
+	void draw_text(std::string text, coordinates<float> screen_position, float text_size)
+	{
+		coordinates<float> resolution = get_resolution();
+		HRESULT hr;
+		
+		std::wstring wtext = string_to_wstring(text);
+		ComPtr<IDWriteTextFormat> text_format;
+		ComPtr<IDWriteTextLayout> text_layout;
+	
+		hr = dwrite_factory->CreateTextFormat(
+			L"Old English Text MT",
+			nullptr,
+			DWRITE_FONT_WEIGHT_NORMAL,
+			DWRITE_FONT_STYLE_NORMAL,
+			DWRITE_FONT_STRETCH_NORMAL,
+			text_size,
+			L"en-US",
+			&text_format);
+		check_hr("CreateTextFormat", hr);
+		
+		hr = dwrite_factory->CreateTextLayout(
+			wtext.c_str(),
+			static_cast<UINT32>(wtext.length()),
+			text_format.Get(),
+			resolution.x,
+			resolution.y,
+			&text_layout);
+		check_hr("CreateTextLayout", hr);
+		
+		assert(text_format);
+		assert(text_layout);
+		assert(sc_brush);
+		assert(d2d1_render_target);
+		
+		d2d1_render_target->DrawTextLayout(
+		    D2D1::Point2F(screen_position.x, screen_position.y),
+		    text_layout.Get(),
+		    sc_brush.Get(),
+		    D2D1_DRAW_TEXT_OPTIONS_NONE);
+	}
 	
 	float get_zoom_level()
 	{
@@ -519,7 +583,10 @@ namespace ForgetteDirectX
 
 		std::println("Beginning Direct2D initialization...");
 
-		hr = D2D1CreateFactory(D2D1_FACTORY_TYPE_SINGLE_THREADED, __uuidof(ID2D1Factory), nullptr, &d2d1_factory);
+		D2D1_FACTORY_OPTIONS factory_options;
+		ZeroMemory(&factory_options, sizeof(D2D1_FACTORY_OPTIONS));
+		factory_options.debugLevel = D2D1_DEBUG_LEVEL_WARNING;
+		hr = D2D1CreateFactory(D2D1_FACTORY_TYPE_SINGLE_THREADED, __uuidof(ID2D1Factory1), &factory_options, &d2d1_factory);
 		if (FAILED(hr))
 		{
 			std::println("Failed to create D2D Factory.");
@@ -568,6 +635,18 @@ namespace ForgetteDirectX
 			return false;
 		}
 		
+		std::println("Initializing render layers...");
+		
+		ID2D1BitmapRenderTarget* new_game_render_target;
+		hr = d2d1_render_target->CreateCompatibleRenderTarget(d2d1_render_target->GetSize(), &new_game_render_target);
+		check_hr("CreateCompatibleRenderTarget game_render_target", hr);
+		game_render_target = std::unique_ptr<ID2D1BitmapRenderTarget>(new_game_render_target);
+		
+		ID2D1BitmapRenderTarget* new_ui_render_target;
+		hr = d2d1_render_target->CreateCompatibleRenderTarget(d2d1_render_target->GetSize(), &new_ui_render_target);
+		check_hr("CreateCompatibleRenderTarget ui_render_target", hr);
+		ui_render_target = std::unique_ptr<ID2D1BitmapRenderTarget>(new_ui_render_target);
+		
 		std::println("Initializing image decoding...");
 		
 		hr = CoCreateInstance(
@@ -587,26 +666,6 @@ namespace ForgetteDirectX
 		std::println("Initializing DirectWrite...");
 		
 		DWriteCreateFactory(DWRITE_FACTORY_TYPE_SHARED, __uuidof(IDWriteFactory5), &dwrite_factory);
-			
-		std::string studio_title = "SILVER MECHANISM";
-		
-		dwrite_factory->CreateTextFormat(
-			L"Old English Text MT",
-			nullptr,
-			DWRITE_FONT_WEIGHT_NORMAL,
-			DWRITE_FONT_STYLE_NORMAL,
-			DWRITE_FONT_STRETCH_NORMAL,
-			72.f,
-			L"en-US",
-			&text_format);
-			
-		dwrite_factory->CreateTextLayout(
-			L"SILVER MECHANISM STUDIO",
-			static_cast<UINT32>(studio_title.length()),
-			text_format.Get(),
-			1000.f,
-			1000.f,
-			&text_layout);
 			
 		std::cout << "Initializing graphical effects" << std::endl;
 		
@@ -640,7 +699,7 @@ namespace ForgetteDirectX
 
 	void present(bool vsync)
 	{
-		d2d1_render_target->EndDraw();
+		check_hr("EndDraw", d2d1_render_target->EndDraw());
 
 		swap_chain->Present(1, 0);
 	}

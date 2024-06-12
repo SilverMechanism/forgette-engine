@@ -1,1 +1,4 @@
-print("loading blood_fields.tofs")
+print("Launch blood_fields...")
+print("Game mode: Survival")
+
+start_gm_survival()

@@ -103,9 +103,6 @@ wchar_t** argv = __wargv;
 	
 	LuaInterop::register_functions(engine->lua_manager.get()->lua_state);
 	
-	std::wstring map_script_path = engine->get_application_dir() + L"\\blood_fields.tofs";
-	engine->load_game_map(map_script_path);
-	
 	// InvalidateRect(win_compat::Window::instance().handle, NULL, TRUE);
 
 	while (!bQuit)
