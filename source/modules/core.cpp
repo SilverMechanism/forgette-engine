@@ -188,7 +188,10 @@ export
 		
 		coordinates<float> world()
 		{
-			return {(x*tile_size/tile_x/2)-y, (x*tile_size/tile_y/2)+y};
+			float A = (x * tile_size * 2) / tile_x;
+		    float B = (y * tile_size * 2) / tile_y;
+		    
+		    return { (A + B) / 2, (A - B) / 2 };
 		}
 		
 		coordinates<float> view_isometric()
@@ -399,10 +402,15 @@ export namespace ptr
 		// Destruct
 		~keeper()
 		{
-			if (_depot && _depot->detach_keeper())
+			if (_depot)
 			{
-				delete _depot;
+				if (!_depot->detach_keeper())
+				{
+					delete _depot;
+				}
 			}
+
+			_depot = nullptr;
 		}
 	    
 	    // Move assignment
@@ -410,7 +418,7 @@ export namespace ptr
 	    {
 	        if (this != &other)
 	        {
-	            if (_depot && _depot->detach_keeper())
+	            if (_depot && !_depot->detach_keeper())
 	            {
 	            	delete _depot;
 	            }

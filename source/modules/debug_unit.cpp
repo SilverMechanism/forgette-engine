@@ -86,6 +86,12 @@ DebugUnit::DebugUnit()
 	{
 		this->movement.movement_input = this->movement.movement_input + coordinates<float>(-1.0f, 0.0f);
 	};
+	
+	binds["primary"] =		[this]()
+	{
+		coordinates<float> target = get_map_location();
+		this->debug_device->use(this, target);
+	};
 }
 
 void DebugUnit::game_update(float delta_time)
@@ -123,7 +129,7 @@ void DebugUnit::on_spawn()
 	
 	get_engine()->spawn_entity<DebugDevice>(debug_device);
 	
-	FloatingText::create("Spawned...", 16.0f, get_map_location(), 5.0f);
+	create_floating_text("Spawned...", 16.0f, get_map_location(), 5.0f);
 }
 
 void DebugUnit::set_sprite_direction()

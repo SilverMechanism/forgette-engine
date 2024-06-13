@@ -189,6 +189,22 @@ namespace Forgette
 		input::map_key("move_right", 0x0044, true);
 		input::map_key("move_down", 0x0053, true);
 		input::map_key("move_left", 0x0041, true);
+		
+		std::cout << 
+		R"(
+═════════════════════════════════════════════════════════════════════
+█████████████████████████████████████████████████████████████████████
+
+███████╗ ██████╗ ██████╗  ██████╗ ███████╗████████╗████████╗███████╗
+██╔════╝██╔═══██╗██╔══██╗██╔════╝ ██╔════╝╚══██╔══╝╚══██╔══╝██╔════╝
+█████╗  ██║   ██║██████╔╝██║  ███╗█████╗     ██║      ██║   █████╗  
+██╔══╝  ██║   ██║██╔══██╗██║   ██║██╔══╝     ██║      ██║   ██╔══╝  
+██║     ╚██████╔╝██║  ██║╚██████╔╝███████╗   ██║      ██║   ███████╗
+╚═╝      ╚═════╝ ╚═╝  ╚═╝ ╚═════╝ ╚══════╝   ╚═╝      ╚═╝   ╚══════╝                                                                                                                                                                                                                  
+█████████████████████████████████████████████████████████████████████
+═════════════════════════════════════════════════════════════════════
+
+)";
 	}
 
 	Engine::~Engine()
@@ -239,25 +255,22 @@ namespace Forgette
 	
 	bool z_compare(const ptr::keeper<Entity> &a, const ptr::keeper<Entity> &b)
 	{
-		Unit* unit1 = dynamic_cast<Unit*>(a.get());
-		Unit* unit2 = dynamic_cast<Unit*>(b.get());
-		
-		if (!unit1 || !unit2)
-		{
-			return false;
-		}
-		
-		auto map_location_a = unit1->get_map_location().isometric();
-		auto map_location_b = unit2->get_map_location().isometric();
-			
-		if (map_location_a.y == map_location_b.y) 
-		{
-		    return map_location_a.x < map_location_b.x;
+	    Unit* unit1 = dynamic_cast<Unit*>(a.get());
+	    Unit* unit2 = dynamic_cast<Unit*>(b.get());
+	
+	    // If either entity is not a unit, they should not affect the sorting.
+	    if (!unit1) return false;
+	    if (!unit2) return true;
+	
+	    auto map_location_a = unit1->get_map_location().isometric();
+	    auto map_location_b = unit2->get_map_location().isometric();
+	
+	    if (map_location_a.y == map_location_b.y)
+	    {
+	        return map_location_a.x < map_location_b.x;
 	    }
-	    
+	
 	    return map_location_a.y < map_location_b.y;
-	    
-	    return false;
 	}
 	
 	bool check_collision(const Unit &unit1, const Unit &unit2)
@@ -273,6 +286,11 @@ namespace Forgette
 	
 	void handle_collision(Unit& unit1, Unit& unit2, float delta_time)
 	{
+		if (!unit1.collision_enabled || !unit2.collision_enabled)
+		{
+			return;
+		}
+		
 	    coordinates<float> pos1 = unit1.get_map_location();
 	    coordinates<float> pos2 = unit2.get_map_location();
 	
@@ -353,6 +371,11 @@ namespace Forgette
 		
 		for (auto& entity : entities)
 		{
+			if (entity.get()->pending_deletion)
+			{
+				continue;
+			}
+			
 			if (entity.get()->should_game_update) 
 			{
 				entity.get()->game_update(delta_time);
@@ -362,12 +385,24 @@ namespace Forgette
 				// std::println("Did not run game update for {}", entity.get()->get_display_name());
 			}
 			
-			
 			if (entity.get()->should_render_update) 
 			{ 
 				entity.get()->render_update();
 			}
 		}
+		
+		for (auto it = entities.begin(); it != entities.end(); /* no increment here */) {
+        if (it->get()->pending_deletion) {
+        
+            // Manually call the destructor
+            it->~keeper();
+
+            // Erase the element from the vector
+            it = entities.erase(it);
+        } else {
+            ++it;
+        }
+    }
 		
 		for (auto& [priority, function_vector] : render_functions)
 		{

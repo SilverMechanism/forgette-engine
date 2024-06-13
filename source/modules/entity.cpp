@@ -23,6 +23,8 @@ export
 		bool should_render_update = false;
 		
 		std::int64_t id = -1;
+		
+		bool pending_deletion = false;
 	protected:
 		// I would like to optimize this somehow
 		// Maybe make a constant base name

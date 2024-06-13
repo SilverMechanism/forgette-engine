@@ -4,14 +4,7 @@ export module device;
 import entity;
 import std;
 import action;
-
-class Unit;
-
-template <typename T>
-concept ActionCallable = requires(Action* action, T& target)
-{
-	{ action->execute(target) };
-};
+import unit;
 
 export
 {	
@@ -22,18 +15,16 @@ export
 		
 		Action* action;
 		
+		void (*process_executor)(Unit*, Action*) = nullptr;
+		
 		template <typename T>
-		void use(Unit& executor, T& target)
+		void use(Unit* executor, T& target)
 		{
-			if constexpr (ActionCallable<T>)
+			if (process_executor)
 			{
-				action->execute(target);
+				process_executor(executor, action);
 			}
-			else
-			{
-				// Lets handle this with a cute little in-game message when it happens
-				std::cout << "Invalid target!" << std::endl;
-			}
+			action->try_execute(target);
 		}
 	};
 }

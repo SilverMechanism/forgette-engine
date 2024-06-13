@@ -16,6 +16,8 @@ export
 			should_render_update = true;
 		}
 		
+		bool collision_enabled = true;
+		
 		std::vector<ptr::watcher<Unit>> welded_units;
 		
 		virtual void render_update() override;
