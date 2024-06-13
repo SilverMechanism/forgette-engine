@@ -6,14 +6,7 @@ import directx;
 import timers;
 
 export
-{
-	enum class RenderGroup : std::uint8_t
-	{
-		Game,
-		UI,
-		Debug
-	};
-	
+{	
 	class Entity
 	{
 	public:

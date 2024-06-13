@@ -4,6 +4,7 @@ import entity;
 import sprite;
 import movement;
 import core;
+import helpers;
 
 export
 {
@@ -29,14 +30,36 @@ export
 		
 		virtual void on_spawn() override;
 		
-		float radius = 12.0f;
+		float radius = 8.0f;
 		Movement movement;
 		
 		float health = 100.f;
 		
+		void damage(float amount)
+		{
+			health -= amount;
+			Helpers::create_floating_text(
+				std::to_string(static_cast<int>(amount)), 
+				16.0f, 
+				get_map_location(), 
+				1.0f, 
+				coordinates<float>(0.0f, 100.0f).view_isometric(), 
+				RenderGroup::Debug, 
+				16.0f);
+			
+			if (health <= 0.0f)
+			{
+				pending_deletion = true;
+			}
+		}
+		
 		coordinates<float> map_location;
 		coordinates<float> get_map_location() const;
 		void set_map_location(coordinates<float> new_map_location);
+		
+		virtual void on_collision(Unit* other_unit) {};
+		
+		std::vector<std::int64_t> ignored_entities;
 	protected:
 		
 		std::string sprite_name;

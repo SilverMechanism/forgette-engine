@@ -43,6 +43,7 @@ export namespace Forgette
 		bool healthy = true;
 
 		std::vector<ptr::keeper<Entity>> entities;
+		std::vector<ptr::keeper<Entity>> new_spawns;
 		
 		void update_render_viewpoint(coordinates<float> new_viewpoint);
 		
@@ -69,7 +70,7 @@ export namespace Forgette
 				unit->set_map_location(world_location);
 			}
 			
-			entities.push_back(std::move(keeper));
+			new_spawns.push_back(std::move(keeper));
 			
 			spawn->on_spawn();
 			entity_counter++;
@@ -89,7 +90,7 @@ export namespace Forgette
 				unit->set_map_location(world_location);
 			}
 			
-			entities.push_back(std::move(keeper));
+			new_spawns.push_back(std::move(keeper));
 			
 			spawn->on_spawn();
 			entity_counter++;
@@ -104,7 +105,7 @@ export namespace Forgette
 			ptr::keeper<Entity> keeper = ptr::keeper<Entity>(spawn);
 			new_watcher = ptr::watcher<T>(keeper);
 			
-			entities.push_back(std::move(keeper));
+			new_spawns.push_back(std::move(keeper));
 			
 			spawn->on_spawn();
 			entity_counter++;
@@ -115,9 +116,9 @@ export namespace Forgette
 		{
 			T* spawn = new T();
 			spawn->id = entity_counter;
-			entities.push_back(ptr::keeper<Entity>(spawn));
+			new_spawns.push_back(ptr::keeper<Entity>(spawn));
 			
-			const ptr::keeper<Entity> &my_keeper = entities.back();
+			const ptr::keeper<Entity> &my_keeper = new_spawns.back();
 			
 			spawn->on_spawn();
 			entity_counter++;
@@ -306,6 +307,17 @@ namespace Forgette
 	
 	    if (distance < collision_distance)
 	    {
+			const std::vector<std::int64_t>& ents1 = unit1.ignored_entities;
+			const std::vector<std::int64_t>& ents2 = unit2.ignored_entities;
+			if (std::find(ents1.begin(), ents1.end(), unit2.id) != ents1.end()
+				|| std::find(ents2.begin(), ents2.end(), unit1.id) != ents2.end())
+			{
+				return;
+			}
+			
+			unit1.on_collision(&unit2);
+			unit2.on_collision(&unit1);
+
 	        // Calculate the amount to rewind
 	        float overlap = collision_distance - distance;
 	        
@@ -346,6 +358,30 @@ namespace Forgette
 	
 	void Engine::map_loop()
 	{
+
+		if (!new_spawns.empty())
+		{
+			entities.insert(
+				entities.end(),
+				std::make_move_iterator(new_spawns.begin()),
+				std::make_move_iterator(new_spawns.end()));
+
+			new_spawns.clear();
+		}
+
+		for (auto it = entities.begin(); it != entities.end(); /* no increment here */) 
+		{
+	        if (it->get()->pending_deletion) 
+	        {
+	            it->~keeper();
+	            it = entities.erase(it);
+	        } 
+	        else 
+	        {
+	            ++it;
+	        }
+	    }
+	    
 		const float delta_time = timer_manager->get_delta_time();
 		
 		if (!active_map.get())
@@ -395,19 +431,6 @@ namespace Forgette
 				entity.get()->render_update();
 			}
 		}
-		
-		for (auto it = entities.begin(); it != entities.end(); /* no increment here */) {
-        if (it->get()->pending_deletion) {
-        
-            // Manually call the destructor
-            it->~keeper();
-
-            // Erase the element from the vector
-            it = entities.erase(it);
-        } else {
-            ++it;
-        }
-    }
 		
 		for (auto& [priority, function_vector] : render_functions)
 		{

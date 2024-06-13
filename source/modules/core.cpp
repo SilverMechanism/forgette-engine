@@ -130,6 +130,13 @@ std::atomic_flag new_in_progress;
 
 export 
 {
+	enum class RenderGroup : std::uint8_t
+	{
+		Game,
+		UI,
+		Debug
+	};
+	
 	void safePrint(const char* msg) {
 	    OutputDebugStringA(msg);
 	}

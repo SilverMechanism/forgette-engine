@@ -9,9 +9,9 @@ import movement;
 import input_handler;
 import sprite_sheet;
 import directx;
-import floating_text;
 import debug_device;
 import forgette;
+import helpers;
 
 const std::unordered_map<std::string, std::uint8_t> angles =
 {
@@ -129,7 +129,7 @@ void DebugUnit::on_spawn()
 	
 	get_engine()->spawn_entity<DebugDevice>(debug_device);
 	
-	create_floating_text("Spawned...", 16.0f, get_map_location(), 2.0f, {0, 0}, RenderGroup::Debug, 0.0f);
+	Helpers::create_floating_text("Spawned...", 16.0f, get_map_location(), 2.0f, {0, 0}, RenderGroup::Debug, 0.0f);
 }
 
 void DebugUnit::set_sprite_direction()
