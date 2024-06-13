@@ -33,13 +33,14 @@ export
 		coordinates<int> atlas_location;
 		coordinates<int> atlas_size;
 		coordinates<float> draw_size;
+		coordinates<float> origin;
 		
 		// Returns a negative number if it could not be retrieved
 		coordinates<float> get_image_dimensions();
 		
 		void render_to_screen(coordinates<float> screen_location);
 		
-		void render_to_map(coordinates<float> map_location, bool force_render);
+		void render_to_map(coordinates<float> map_location, bool force_render, float z = 0.0f);
 		
 		GFX::raw_image* get_image();
 	private:
@@ -124,8 +125,10 @@ void Sprite::render_to_screen(coordinates<float> screen_location)
 // map_location: the location of the sprite on the map
 // game_map: a reference to the map itself
 // force_render: if true, will render the sprite without sector checks
-void Sprite::render_to_map(coordinates<float> map_location, bool force_render/*, const GameMap &game_map*/)
+void Sprite::render_to_map(coordinates<float> map_location, bool force_render, float z/*, const GameMap &game_map*/)
 {
+	coordinates<float> render_location = map_location;
+	
 	if (!force_render/* && !game_map.sector_check(map_location, GFX::render_viewpoint)*/)
 	{
 		return;
@@ -133,6 +136,11 @@ void Sprite::render_to_map(coordinates<float> map_location, bool force_render/*,
 	
 	if (image.get())
 	{
+		if (z > 0.1f)
+		{
+			render_location = render_location.z_shift(z);
+		}
+		
 		if (atlas_size)
 		{
 			ForgetteDirectX::draw_sprite_to_map

@@ -7,6 +7,13 @@ import timers;
 
 export
 {
+	enum class RenderGroup : std::uint8_t
+	{
+		Game,
+		UI,
+		Debug
+	};
+	
 	class Entity
 	{
 	public:
@@ -25,6 +32,11 @@ export
 		std::int64_t id = -1;
 		
 		bool pending_deletion = false;
+		
+		RenderGroup render_group = RenderGroup::Game;
+		
+		// Used for rendering purposes only
+		float z = 0.0f;
 	protected:
 		// I would like to optimize this somehow
 		// Maybe make a constant base name

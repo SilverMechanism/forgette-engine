@@ -15,7 +15,7 @@ export
 		void execute_coords(std::any target)
 		{
 			coordinates<float> coords = get_target_value<coordinates<float>>(target);
-			create_floating_text("Pew!", 16.0f, coords, 1.0f, text_drift);
+			create_floating_text("Pew!", 16.0f, coords, 6.0f, text_drift, RenderGroup::Game, 48.0f);
 		}
 		
 		DebugAction()

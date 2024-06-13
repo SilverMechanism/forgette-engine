@@ -21,7 +21,7 @@ DebugDevice::~DebugDevice()
 
 void set_text_movement(Unit* executor, Action* action)
 {
-	static_cast<DebugAction*>(action)->text_drift = executor->get_map_location().towards(input::get_cursor_map_location()).normalize();
+	static_cast<DebugAction*>(action)->text_drift = executor->get_map_location().towards(input::get_cursor_map_location()).normalize() * 233.0f;
 }
 
 void DebugDevice::game_update(float delta_time)

@@ -129,7 +129,7 @@ void DebugUnit::on_spawn()
 	
 	get_engine()->spawn_entity<DebugDevice>(debug_device);
 	
-	create_floating_text("Spawned...", 16.0f, get_map_location(), 5.0f);
+	create_floating_text("Spawned...", 16.0f, get_map_location(), 2.0f, {0, 0}, RenderGroup::Debug, 0.0f);
 }
 
 void DebugUnit::set_sprite_direction()

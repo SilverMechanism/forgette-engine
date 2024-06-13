@@ -76,7 +76,7 @@ export namespace ForgetteDirectX
 	
 	void draw_text(std::string text, coordinates<float> screen_position, float text_size);
 	
-	coordinates<float> world_to_screen(coordinates<float> world_coords);
+	coordinates<float> world_to_screen(coordinates<float> world_coords, float z = 0.0f);
 	coordinates<float> screen_to_world(coordinates<float> screen_coords);
 	
 	enum class ProjectionMode : byte
@@ -148,43 +148,53 @@ namespace ForgetteDirectX
 	
 	void draw_text(std::string text, coordinates<float> screen_position, float text_size)
 	{
-		coordinates<float> resolution = get_resolution();
-		HRESULT hr;
-		
-		std::wstring wtext = string_to_wstring(text);
-		ComPtr<IDWriteTextFormat> text_format;
-		ComPtr<IDWriteTextLayout> text_layout;
+	    coordinates<float> resolution = get_resolution();
+	    HRESULT hr;
 	
-		hr = dwrite_factory->CreateTextFormat(
-			L"Old English Text MT",
-			nullptr,
-			DWRITE_FONT_WEIGHT_NORMAL,
-			DWRITE_FONT_STYLE_NORMAL,
-			DWRITE_FONT_STRETCH_NORMAL,
-			text_size,
-			L"en-US",
-			&text_format);
-		check_hr("CreateTextFormat", hr);
-		
-		hr = dwrite_factory->CreateTextLayout(
-			wtext.c_str(),
-			static_cast<UINT32>(wtext.length()),
-			text_format.Get(),
-			resolution.x,
-			resolution.y,
-			&text_layout);
-		check_hr("CreateTextLayout", hr);
-		
-		assert(text_format);
-		assert(text_layout);
-		assert(sc_brush);
-		assert(d2d1_render_target);
-		
-		d2d1_render_target->DrawTextLayout(
-		    D2D1::Point2F(screen_position.x, screen_position.y),
-		    text_layout.Get(),
-		    sc_brush.Get(),
-		    D2D1_DRAW_TEXT_OPTIONS_NONE);
+	    std::wstring wtext = string_to_wstring(text);
+	    ComPtr<IDWriteTextFormat> text_format;
+	    ComPtr<IDWriteTextLayout> text_layout;
+	
+	    hr = dwrite_factory->CreateTextFormat(
+	        L"Old English Text MT",
+	        nullptr,
+	        DWRITE_FONT_WEIGHT_NORMAL,
+	        DWRITE_FONT_STYLE_NORMAL,
+	        DWRITE_FONT_STRETCH_NORMAL,
+	        text_size,
+	        L"en-US",
+	        &text_format);
+	    check_hr("CreateTextFormat", hr);
+	
+	    hr = dwrite_factory->CreateTextLayout(
+	        wtext.c_str(),
+	        static_cast<UINT32>(wtext.length()),
+	        text_format.Get(),
+	        resolution.x,
+	        resolution.y,
+	        &text_layout);
+	    check_hr("CreateTextLayout", hr);
+	
+	    assert(text_format);
+	    assert(text_layout);
+	    assert(sc_brush);
+	    assert(d2d1_render_target);
+	
+	    // Get the text metrics
+	    DWRITE_TEXT_METRICS text_metrics;
+	    hr = text_layout->GetMetrics(&text_metrics);
+	    check_hr("GetMetrics", hr);
+	
+	    // Calculate the centered position
+	    float centered_x = screen_position.x - (text_metrics.width / 2.0f);
+	    float centered_y = screen_position.y - (text_metrics.height / 2.0f);
+	
+	    // Draw the text at the centered position
+	    d2d1_render_target->DrawTextLayout(
+	        D2D1::Point2F(centered_x, centered_y),
+	        text_layout.Get(),
+	        sc_brush.Get(),
+	        D2D1_DRAW_TEXT_OPTIONS_NONE);
 	}
 	
 	float get_zoom_level()
@@ -216,7 +226,7 @@ namespace ForgetteDirectX
 		return viewpoint_anchor;
 	}
 	
-	coordinates<float> world_to_screen(coordinates<float> world_coords)
+	coordinates<float> world_to_screen(coordinates<float> world_coords, float z)
 	{
 		coordinates<float> resolution = get_resolution();
 		coordinates<float> screen_coords;
@@ -224,7 +234,7 @@ namespace ForgetteDirectX
 		world_coords.x = (world_coords.x - render_viewpoint.x);
 		world_coords.y = (world_coords.y - render_viewpoint.y);
 		
-		world_coords = world_coords.isometric();
+		world_coords = world_coords.isometric().z_shift(z*5.0f);
 		
 		screen_coords.x = world_coords.x + (resolution.x/2);
 		screen_coords.y = world_coords.y + (resolution.y/2);

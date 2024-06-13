@@ -199,6 +199,11 @@ export
 			return {(x - y), (x + y)};
 		}
 		
+		coordinates<float> z_shift(float z)
+		{
+			return {x, y - (z * 0.5f)};
+		}
+		
 		float magnitude()
 		{
 			return std::sqrt(x * x + y * y);

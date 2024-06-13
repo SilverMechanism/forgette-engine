@@ -261,6 +261,11 @@ namespace Forgette
 	    // If either entity is not a unit, they should not affect the sorting.
 	    if (!unit1) return false;
 	    if (!unit2) return true;
+	    
+	    if (unit1->render_group != unit2->render_group)
+	    {
+	        return (unit1->render_group < unit2->render_group);
+	    }
 	
 	    auto map_location_a = unit1->get_map_location().isometric();
 	    auto map_location_b = unit2->get_map_location().isometric();

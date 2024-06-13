@@ -21,7 +21,10 @@ export
 			}
 			
 			coordinates coords = coordinates(static_cast<float>(lua_tonumber(L, 1)), static_cast<float>(lua_tonumber(L, 2)));
-		    lua_pushlightuserdata(L, get_engine()->spawn_entity<DebugUnit>(coords).get());
+			
+			ptr::watcher<DebugUnit> unit;
+			get_engine()->spawn_entity<DebugUnit>(coords, unit);
+		    lua_pushlightuserdata(L, unit.get());
 		    
 		    return 1;
 		}
