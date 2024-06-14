@@ -7,6 +7,15 @@ import timers;
 
 export
 {	
+	// Performance "enhancer"...
+	// Very fast way to check if something is dervied from Unit with no cast
+	enum class EntityType : std::uint8_t
+	{
+		Phantom,
+		UI,
+		Unit
+	};
+	
 	class Entity
 	{
 	public:
@@ -36,8 +45,15 @@ export
 		// and an empty string for a dynamic name
 		// Dynamic names should be quite unusual (i think)
 		std::string display_name = "Entity";
+		EntityType type = EntityType::Phantom;
 		
 	private:
+		
+	public:
+		EntityType get_type()
+		{
+			return type;
+		}
 	};
 }
 

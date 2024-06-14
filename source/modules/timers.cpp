@@ -8,6 +8,7 @@ struct Timer
 {
 	int handle = -1;
 	float remaining = 0;
+	float base = 0;
 	std::function<void()> callback;
 	int calls = 1;
 };
@@ -45,14 +46,14 @@ public:
 
 	int CreateTimer(float duration, std::function<void()> callback)
 	{
-		Timers.push_back(Timer{ running_handle, duration, callback, 1 });
+		Timers.push_back(Timer{ running_handle, duration, duration, callback, 1 });
 		++running_handle;
 		return running_handle - 1;
 	}
 
 	int CreateTimer(float duration, std::function<void()> callback, int calls)
 	{
-		Timers.push_back(Timer{ running_handle, duration, callback, calls });
+		Timers.push_back(Timer{ running_handle, duration, duration, callback, calls });
 		++running_handle;
 		return running_handle - 1;
 	}
@@ -84,6 +85,7 @@ public:
 					{
 						return true;
 					}
+					timer.remaining = timer.base;
 				}
 
 				return false;

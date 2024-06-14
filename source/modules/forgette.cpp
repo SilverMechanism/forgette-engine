@@ -388,6 +388,15 @@ namespace Forgette
 	        }
 	    }
 	    
+	    std::vector<Unit*> units;
+	    for (auto& entity : entities)
+	    {
+	    	if (Unit* unit = dynamic_cast<Unit*>(entity.get()))
+	    	{
+	    		units.push_back(unit);
+	    	}
+	    }
+	    
 		const float delta_time = timer_manager->get_delta_time();
 		
 		if (!active_map.get())
@@ -399,19 +408,13 @@ namespace Forgette
 		
 		std::sort(entities.begin(), entities.end(), z_compare);
 		
-		for (auto &entity : entities)
+		for (Unit* unit1 : units)
 		{
-			if (Unit* unit1 = dynamic_cast<Unit*>(entity.get()))
+			for (Unit* unit2 : units)
 			{
-				for (auto &entity2 : entities)
+				if (unit1 != unit2)
 				{
-					if (Unit* unit2 = dynamic_cast<Unit*>(entity2.get()))
-					{
-						if (unit1 != unit2)
-						{
-							handle_collision(*unit1, *unit2, delta_time);
-						}
-					}
+					handle_collision(*unit1, *unit2, delta_time);
 				}
 			}
 		}

@@ -7,6 +7,7 @@ import villager;
 import spirit;
 import player;
 import core;
+import timers;
 
 void GM_Survival::start()
 {
@@ -25,4 +26,16 @@ void GM_Survival::start()
 	engine->spawn_entity<Spirit>({0,0}, new_spirit);
 	
 	new_spirit->inhabit(ptr::watcher<Unit>(new_villager));
+	
+	TimerManager* timer_manager = TimerManager::Instance();
+	timer_manager->CreateTimer(1.0f, [this]()
+	{ 
+		ptr::watcher<Villager> new_villager;
+		ptr::watcher<Spirit> new_spirit;
+		
+		get_engine()->spawn_entity<Villager>(coordinates<float>(0.0f, 0.0f).random_nearby(200.0f), new_villager);
+		get_engine()->spawn_entity<Spirit>(new_spirit);
+		
+		new_spirit->inhabit(ptr::watcher<Unit>(new_villager));
+	}, 10);
 }

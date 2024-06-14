@@ -290,9 +290,9 @@ namespace ForgetteDirectX
 	{
 		const coordinates<float> center = {get_resolution().x/2, get_resolution().y/2};
 		const coordinates<float> direction = target.towards(center);
-		coordinates<float> topVertex = center + (direction * -64.0f);
-	    float height = 36.0f;
-	    float width = 16.0f;
+		coordinates<float> topVertex = center + (direction * -48.0f);
+	    float height = 18.0f;
+	    float width = 8.0f;
 	    
 	    // Calculate the base center
 	    coordinates<float> baseCenter;

@@ -15,6 +15,7 @@ export
 		{
 			display_name = "Unit";
 			should_render_update = true;
+			type = EntityType::Unit;
 		}
 		
 		bool collision_enabled = true;
