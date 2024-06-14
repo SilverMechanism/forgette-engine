@@ -13,5 +13,6 @@ export
 	public:
 		MagicText();
 		virtual void on_collision(Unit* other_unit) override;
+		virtual void render_update() override;
 	};
 }

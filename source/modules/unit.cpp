@@ -60,6 +60,12 @@ export
 		virtual void on_collision(Unit* other_unit) {};
 		
 		std::vector<std::int64_t> ignored_entities;
+		
+		// The collision group this unit belongs to
+		CollisionGroup collision_group = CollisionGroup::Unit;
+		
+		// Both units being checked must collide with each others group for a collision to take place
+		std::set<CollisionGroup> collides_with;
 	protected:
 		
 		std::string sprite_name;

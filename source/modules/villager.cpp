@@ -23,6 +23,7 @@ export
 
 Villager::Villager()
 {
+	
 	sprite_name = "chicken-beast";
 	display_name = "Villager";
 

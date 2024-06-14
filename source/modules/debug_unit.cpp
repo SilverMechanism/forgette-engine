@@ -61,7 +61,11 @@ DebugUnit::DebugUnit()
 {
 	display_name = "Debug Unit";
 	sprite_name = "waifu";
-
+	
+	collides_with.insert(CollisionGroup::Unit);
+	collides_with.insert(CollisionGroup::Projectile);
+	collides_with.insert(CollisionGroup::Prop);
+	
 	should_game_update = true;
 	
 	// binds["primary"] = 		[this]() {std::cout << "Left mouse click!" << std::endl;};

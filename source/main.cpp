@@ -62,6 +62,8 @@ wchar_t** argv = __wargv;
 	    set_exe_path(exe_path);
 	}
 	
+	SetProcessDPIAware();
+	
 	win_compat::Window &window = win_compat::Window::instance();
 	win_compat::initialize(hInstance);
 	

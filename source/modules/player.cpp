@@ -18,6 +18,7 @@ export
 		void ZoomOut();
 		
 		virtual void game_update(float delta_time) override;
+		virtual void render_update() override;
 		
 		bool locked_to_unit = true;
 		
@@ -36,6 +37,7 @@ Player::Player()
 {
 	display_name = "Player";
 	should_game_update = true;
+	should_render_update = true;
 	
 	input_bindings.push_back({"primary", input::KeyEventType::key_down, 0});
 	input_bindings.push_back({"secondary", input::KeyEventType::key_down, 0});
@@ -53,6 +55,14 @@ void Player::game_update(float delta_time)
 		coordinates<float> draw_size = controlled_unit->sprite->draw_size;
 		// render_pos = {render_pos.x-draw_size.y/4, render_pos.y+draw_size.y/4};
 		ForgetteDirectX::set_render_viewpoint(render_pos);
+	}
+}
+
+void Player::render_update()
+{
+	if (controlled_unit.get())
+	{
+		ForgetteDirectX::draw_facing_helper(input::get_cursor_screen_location());
 	}
 }
 

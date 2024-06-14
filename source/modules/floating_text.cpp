@@ -15,8 +15,8 @@ void FloatingText::game_update(float delta_time)
 		pending_deletion = true;
 	}
 	
-	movement.velocity = drift;
-	set_map_location(movement.apply_velocity(get_map_location(), delta_time));
+	// movement.velocity = drift;
+	set_map_location(get_map_location()+ (drift * delta_time));
 }
 
 void FloatingText::render_update()

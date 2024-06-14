@@ -137,6 +137,13 @@ export
 		Debug
 	};
 	
+	enum class CollisionGroup : std::uint8_t
+	{
+		Unit,
+		Projectile,
+		Prop
+	};
+	
 	void safePrint(const char* msg) {
 	    OutputDebugStringA(msg);
 	}
@@ -319,7 +326,7 @@ export
 		    return {this->x + random_radius * std::cos(angle), this->y + random_radius * std::sin(angle)};
 	    }
 	    
-	    coordinates<float> towards(coordinates<float> to_look_at)
+	    coordinates<float> towards(coordinates<float> to_look_at) const
 	    {
 	    	return coordinates<float>(to_look_at.x - this->x, to_look_at.y - this->y).normalize();
 	    }

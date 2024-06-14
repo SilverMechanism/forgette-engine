@@ -135,6 +135,10 @@ export namespace ForgetteDirectX
 	void draw_sprite_to_map(ID2D1Bitmap* bitmap, coordinates<float> dimensions, coordinates<float> map_location, coordinates<float> atlas_location, coordinates<float> atlas_size);
 	
 	void draw_map_tile(ID2D1Bitmap* bitmap, coordinates<float> dimensions, coordinates<float> map_location, float tile_size);
+	
+	void draw_unit_shadow(coordinates<float> screen_location, float radius);
+	
+	void draw_facing_helper(const coordinates<float> direction = {1.0f, 0.0f});
 }
 
 namespace ForgetteDirectX
@@ -244,27 +248,27 @@ namespace ForgetteDirectX
 	
 	coordinates<float> screen_to_world(coordinates<float> screen_coords)
 	{
-		coordinates<float> resolution = get_resolution();
-		coordinates<float> world_coords;
-		
-		world_coords.x = screen_coords.x - (resolution.x/2);
-		world_coords.y = screen_coords.y - (resolution.y/2);
-		
-		world_coords = world_coords.world();
-		
-		return world_coords + render_viewpoint;
+	    coordinates<float> resolution = get_resolution();
+	    coordinates<float> world_coords;
+	    
+	    world_coords.x = screen_coords.x - (resolution.x/2);
+	    world_coords.y = screen_coords.y - (resolution.y/2);
+	    
+	    world_coords = world_coords.world();
+	    
+	    return world_coords + render_viewpoint;
 	}
 	
 	ID2D1GradientStopCollection* pGradientStops = nullptr;
 	ID2D1RadialGradientBrush* pRadialGradientBrush = nullptr;
 	D2D1_MATRIX_3X2_F shadow_rotation;
 
-	void draw_unit_shadow(coordinates<float> map_location, float radius)
+	void draw_unit_shadow(coordinates<float> screen_location, float radius)
 	{
-		D2D1_POINT_2F gradientCenter = D2D1::Point2F(map_location.x, map_location.y); // Center of the gradient
+		D2D1_POINT_2F gradientCenter = D2D1::Point2F(screen_location.x, screen_location.y); // Center of the gradient
 	    D2D1_POINT_2F gradientOriginOffset = D2D1::Point2F(0, 0); // No offset
-	    FLOAT gradientRadiusX = 35.0f; // X radius
-	    FLOAT gradientRadiusY = 25.0f; // Y radius
+	    FLOAT gradientRadiusX = radius; // X radius
+	    FLOAT gradientRadiusY = radius*0.667f; // Y radius
 	    
 	    shadow_rotation = D2D1::Matrix3x2F::Rotation(-45.0f, gradientCenter);
         d2d1_render_target->SetTransform(shadow_rotation);
@@ -275,11 +279,44 @@ namespace ForgetteDirectX
         pRadialGradientBrush->SetRadiusY(gradientRadiusY);
         
 	     d2d1_render_target->FillEllipse(
-            D2D1::Ellipse(D2D1::Point2F(map_location.x, map_location.y), 60, 30),
+            D2D1::Ellipse(D2D1::Point2F(screen_location.x, screen_location.y), 60, 30),
             pRadialGradientBrush
         );
         
         d2d1_render_target->SetTransform(D2D1::Matrix3x2F::Identity());
+	}
+	
+	void draw_facing_helper(const coordinates<float> target)
+	{
+		const coordinates<float> center = {get_resolution().x/2, get_resolution().y/2};
+		const coordinates<float> direction = target.towards(center);
+		coordinates<float> topVertex = center + (direction * -64.0f);
+	    float height = 36.0f;
+	    float width = 16.0f;
+	    
+	    // Calculate the base center
+	    coordinates<float> baseCenter;
+	    baseCenter.x = topVertex.x + height * direction.x;
+	    baseCenter.y = topVertex.y + height * direction.y;
+	
+	    // Calculate the offsets for the base vertices
+	    coordinates<float> perpDirection = {-direction.y, direction.x};
+	
+	    coordinates<float> baseLeft, baseRight;
+	    baseLeft.x = baseCenter.x + width/2 * perpDirection.x;
+	    baseLeft.y = baseCenter.y + width/2 * perpDirection.y;
+	
+	    baseRight.x = baseCenter.x - width/2 * perpDirection.x;
+	    baseRight.y = baseCenter.y - width/2 * perpDirection.y;
+	    
+	    D2D1_POINT_2F A = {topVertex.x, topVertex.y};
+	    D2D1_POINT_2F B = {baseLeft.x, baseLeft.y};
+	    D2D1_POINT_2F C = {baseRight.x, baseRight.y};
+    
+	    // Draw the triangle
+	    d2d1_render_target->DrawLine(A, B, sc_brush.Get(), 2.0f);
+	    d2d1_render_target->DrawLine(B, C, sc_brush.Get(), 2.0f);
+	    d2d1_render_target->DrawLine(C, A, sc_brush.Get(), 2.0f);
 	}
 	
 	void draw_sprite_to_map(ID2D1Bitmap* bitmap, coordinates<float> dimensions, coordinates<float> map_location)
@@ -312,11 +349,11 @@ namespace ForgetteDirectX
 		dimensions.x *= zoom_level;
 		
 		D2D1_RECT_F draw_rect = D2D1::RectF(
-			screen_coords.x-(dimensions.x/2), screen_coords.y-dimensions.y, 
-			screen_coords.x+(dimensions.x/2), screen_coords.y
+			screen_coords.x-(dimensions.x/2), screen_coords.y-dimensions.y+18.0f, 
+			screen_coords.x+(dimensions.x/2), screen_coords.y+18.0f
 		);
 		
-		draw_unit_shadow({draw_rect.left + dimensions.x/2.0f, draw_rect.bottom-dimensions.y/5.67f}, 36.0f);
+		draw_unit_shadow({draw_rect.left + dimensions.x/1.667f, draw_rect.bottom-dimensions.y/5.67f}, 36.0f);
 		
 		if (atlas_dimensions.x < 0)
 		{

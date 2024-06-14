@@ -307,6 +307,12 @@ namespace Forgette
 	
 	    if (distance < collision_distance)
 	    {
+	    	if (!unit1.collides_with.count(unit2.collision_group) 
+	    		|| !unit2.collides_with.count(unit1.collision_group))
+	    	{
+	    		return;
+	    	}
+	    	
 			const std::vector<std::int64_t>& ents1 = unit1.ignored_entities;
 			const std::vector<std::int64_t>& ents2 = unit2.ignored_entities;
 			if (std::find(ents1.begin(), ents1.end(), unit2.id) != ents1.end()

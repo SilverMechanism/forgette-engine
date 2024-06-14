@@ -259,26 +259,33 @@ class WO_RawInputObserver : public win_compat::WindowObserver
 				}
 				
 				cursor_location = {static_cast<float>(absolute_position.x), static_cast<float>(absolute_position.y)};
+				// coordinates<int> resolution = ForgetteDirectX::get_resolution();
+				// std::cout << std::string(cursor_location) << std::endl << std::string(resolution);
 				
-				if (GetForegroundWindow() == win_compat::Window::instance().handle)
+				bool constrain_mouse = true;
+				if (constrain_mouse)
 				{
-				    coordinates<int> resolution = ForgetteDirectX::get_resolution();
-				    int center_x = resolution.x / 2;
-				    int center_y = resolution.y / 2;
-				
-				    float dx = cursor_location.x - center_x;
-				    float dy = cursor_location.y - center_y;
-				    float distance = std::sqrt(dx * dx + dy * dy);
-				
-				    const float max_distance = 100.0f; // Circle radius
-				
-				    if (distance > max_distance)
-				    {
-				        float ratio = max_distance / distance;
-				        int clamped_x = static_cast<int>(center_x + dx * ratio);
-				        int clamped_y = static_cast<int>(center_y + dy * ratio);
-				        SetCursorPos(clamped_x, clamped_y);
-				    }
+					coordinates<int> resolution = ForgetteDirectX::get_resolution();
+					float aspect_ratio = static_cast<float>(resolution.x) / static_cast<float>(resolution.y);
+					int center_x = resolution.x / 2;
+					int center_y = resolution.y / 2;
+					float max_distance_squared = 100.0f * 100.0f; // Circle radius squared
+					float threshold = 1.0f; // Allow small movements without clamping
+	
+					if (GetForegroundWindow() == win_compat::Window::instance().handle)
+					{
+					    float normalized_dx = (cursor_location.x - center_x) / aspect_ratio;
+					    float dy = cursor_location.y - center_y;
+					    float distance_squared = normalized_dx * normalized_dx + dy * dy;
+					
+					    if (distance_squared > max_distance_squared)
+					    {
+					        float ratio = (max_distance_squared - threshold * threshold) / distance_squared;
+					        int clamped_x = center_x + static_cast<int>(normalized_dx * ratio * aspect_ratio);
+					        int clamped_y = center_y + static_cast<int>(dy * ratio);
+					        SetCursorPos(clamped_x, clamped_y);
+					    }
+					}
 				}
 			}
 			break;

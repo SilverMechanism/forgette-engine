@@ -15,7 +15,7 @@ export
 		DebugDevice();
 		~DebugDevice();
 		
-		float pulse_timer = 0.0f;
+		double pulse_timer = 0.0f;
 		
 		virtual void game_update(float delta_time) override;
 	};
