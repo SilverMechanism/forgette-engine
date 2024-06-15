@@ -290,6 +290,20 @@ class WO_RawInputObserver : public win_compat::WindowObserver
 			}
 			break;
 		}
+		case WM_MOUSEWHEEL:
+        {
+            if (GET_WHEEL_DELTA_WPARAM(wParam) > 0)
+            {
+                ForgetteDirectX::set_zoom_level(ForgetteDirectX::get_zoom_level() + 0.1f);
+            }
+            else
+            {
+            	ForgetteDirectX::set_zoom_level(ForgetteDirectX::get_zoom_level() - 0.1f);
+            }
+
+            // Handle the scroll input as needed
+            break;
+        }
 		case WM_LBUTTONDOWN:
 			if (input_binds[0x0001].key_down_bindings.size())
 			{
@@ -429,6 +443,7 @@ export namespace input
 		RawInputObserver = std::make_shared<WO_RawInputObserver>();
 		window.add_observer(WM_INPUT, RawInputObserver);
 		
+		window.add_observer(WM_MOUSEWHEEL, RawInputObserver);
 		window.add_observer(WM_LBUTTONDOWN, RawInputObserver);
 		window.add_observer(WM_RBUTTONDOWN, RawInputObserver);
 		

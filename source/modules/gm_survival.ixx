@@ -8,6 +8,7 @@ export
 	class GM_Survival : public GameMode
 	{
 	public:
+		void spawn_wave();
 		virtual void start() override;
 	};
 }

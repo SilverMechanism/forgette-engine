@@ -3,30 +3,38 @@ module debug_device;
 
 import debug_action;
 import input;
+import helpers;
 
 DebugDevice::DebugDevice()
 {
-	action = new DebugAction();
-	process_executor = set_text_movement;
 	should_game_update = true;
 }
 
 DebugDevice::~DebugDevice()
 {
-	if (action)
-	{
-		delete action;
-	}
-}
-
-void set_text_movement(Unit* executor, Action* action)
-{
-	DebugAction* debug_action = static_cast<DebugAction*>(action);
-	debug_action->text_drift = executor->get_map_location().towards(input::get_cursor_map_location()) * 233.0f;
-	debug_action->entities_to_ignore.push_back(executor->id);
+	
 }
 
 void DebugDevice::game_update(float delta_time)
 {
 	
+}
+
+void DebugDevice::render_update()
+{
+
+}
+
+template<>
+void DebugDevice::use<coordinates<float>>(Unit* user, coordinates<float>& target)
+{
+	Helpers::create_magic_text(
+		"Pew!", 
+		16.0f,
+		target,
+		6.0f,
+		user->get_map_location().towards(input::get_cursor_map_location()) * 233.0f,
+		RenderGroup::Game,
+		48.0f,
+		{user->id});
 }

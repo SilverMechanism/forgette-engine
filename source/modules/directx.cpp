@@ -148,7 +148,7 @@ namespace ForgetteDirectX
 	
 	coordinates<float> render_viewpoint;
 	coordinates<float> viewpoint_anchor;
-	float zoom_level {1.0f};
+	float zoom_level {1.5f};
 	
 	void draw_text(std::string text, coordinates<float> screen_position, float text_size)
 	{
@@ -158,6 +158,8 @@ namespace ForgetteDirectX
 	    std::wstring wtext = string_to_wstring(text);
 	    ComPtr<IDWriteTextFormat> text_format;
 	    ComPtr<IDWriteTextLayout> text_layout;
+	    
+	    text_size *= zoom_level;
 	
 	    hr = dwrite_factory->CreateTextFormat(
 	        L"Old English Text MT",
@@ -208,7 +210,16 @@ namespace ForgetteDirectX
 	
 	void set_zoom_level(float new_zoom_level)
 	{
+		if (new_zoom_level > 1.5f || new_zoom_level < 0.75f)
+		{
+			return;
+		}
+		
 		zoom_level = new_zoom_level;
+		if (false)
+		{
+			std::cout << "New zoom level: " << zoom_level << std::endl;
+		}
 	}
 	
 	void set_render_viewpoint(coordinates<float> new_viewpoint)
@@ -230,20 +241,36 @@ namespace ForgetteDirectX
 		return viewpoint_anchor;
 	}
 	
+	// Apply the zoom level to screen coordinates
+	coordinates<float> apply_zoom(coordinates<float> screen_coords, const coordinates<float> screen_center)
+	{
+		screen_coords.x = (screen_coords.x - screen_center.x) * zoom_level + screen_center.x;
+	    screen_coords.y = (screen_coords.y - screen_center.y) * zoom_level + screen_center.y;
+	    return screen_coords;
+	}
+	
 	coordinates<float> world_to_screen(coordinates<float> world_coords, float z)
 	{
-		coordinates<float> resolution = get_resolution();
-		coordinates<float> screen_coords;
-		
-		world_coords.x = (world_coords.x - render_viewpoint.x);
-		world_coords.y = (world_coords.y - render_viewpoint.y);
-		
-		world_coords = world_coords.isometric().z_shift(z*5.0f);
-		
-		screen_coords.x = world_coords.x + (resolution.x/2);
-		screen_coords.y = world_coords.y + (resolution.y/2);
-		
-		return screen_coords;
+	    coordinates<float> resolution = get_resolution();
+	    coordinates<float> screen_center = { resolution.x / 2.0f, resolution.y / 2.0f };
+	    coordinates<float> screen_coords;
+	
+	    // Calculate the relative position to the render viewpoint
+	    world_coords.x = (world_coords.x - render_viewpoint.x);
+	    world_coords.y = (world_coords.y - render_viewpoint.y);
+	
+	    // Apply isometric transformation and Z-shift
+	    world_coords = world_coords.isometric().z_shift(z * 5.0f);
+	
+	    // Apply zoom level
+	    world_coords.x *= zoom_level;
+	    world_coords.y *= zoom_level;
+	
+	    // Adjust coordinates to be centered on the screen
+	    screen_coords.x = world_coords.x + screen_center.x;
+	    screen_coords.y = world_coords.y + screen_center.y;
+	
+	    return screen_coords;
 	}
 	
 	coordinates<float> screen_to_world(coordinates<float> screen_coords)
@@ -267,8 +294,9 @@ namespace ForgetteDirectX
 	{
 		D2D1_POINT_2F gradientCenter = D2D1::Point2F(screen_location.x, screen_location.y); // Center of the gradient
 	    D2D1_POINT_2F gradientOriginOffset = D2D1::Point2F(0, 0); // No offset
-	    FLOAT gradientRadiusX = radius; // X radius
-	    FLOAT gradientRadiusY = radius*0.667f; // Y radius
+	    
+	    FLOAT gradientRadiusX = radius * zoom_level; // X radius
+	    FLOAT gradientRadiusY = radius * 0.667f * zoom_level; // Y radius
 	    
 	    shadow_rotation = D2D1::Matrix3x2F::Rotation(-45.0f, gradientCenter);
         d2d1_render_target->SetTransform(shadow_rotation);
@@ -326,111 +354,115 @@ namespace ForgetteDirectX
 	
 	void draw_sprite_to_map(ID2D1Bitmap* bitmap, coordinates<float> dimensions, coordinates<float> map_location, coordinates<float> atlas_location, coordinates<float> atlas_dimensions)
 	{
-		coordinates<float> resolution = get_resolution();
-		coordinates<float> delta;
-		coordinates<float> screen_coords;
-		
-		// delta.x = (map_location.x - render_viewpoint.x);
-		// delta.y = (map_location.y - render_viewpoint.y);
-		
-		screen_coords = world_to_screen(map_location);
-		
-		if (screen_coords.x-dimensions.x > resolution.x || screen_coords.x+dimensions.x < 0)
-		{
-			return;
-		}
-		
-		if (screen_coords.y-dimensions.y > resolution.y || screen_coords.y+dimensions.y < 0)
-		{
-			return;
-		}
-		
-		dimensions.y *= zoom_level;
-		dimensions.x *= zoom_level;
-		
-		D2D1_RECT_F draw_rect = D2D1::RectF(
-			screen_coords.x-(dimensions.x/2), screen_coords.y-dimensions.y+18.0f, 
-			screen_coords.x+(dimensions.x/2), screen_coords.y+18.0f
-		);
-		
-		draw_unit_shadow({draw_rect.left + dimensions.x/1.667f, draw_rect.bottom-dimensions.y/5.67f}, 36.0f);
-		
-		if (atlas_dimensions.x < 0)
-		{
-		    D2D1_POINT_2F center = D2D1::Point2F(screen_coords.x, screen_coords.y - (dimensions.y / 2.0f));
-		    atlas_dimensions.x = std::abs(atlas_dimensions.x);
-		    D2D1_MATRIX_3X2_F transform = D2D1::Matrix3x2F::Translation(-center.x, -center.y) *
-		                                  D2D1::Matrix3x2F::Scale(-1.0f, 1.0f) *
-		                                  D2D1::Matrix3x2F::Translation(center.x, center.y);
-		    d2d1_render_target->SetTransform(transform);
-		}
-		
-		D2D1_RECT_F atlas_rect = D2D1::RectF(
-				atlas_location.x, atlas_location.y,
-				atlas_location.x+atlas_dimensions.x, atlas_location.y+atlas_dimensions.y);
-		
-		if (atlas_dimensions)
-		{
-			d2d1_render_target->DrawBitmap(
-				bitmap,
-				draw_rect, 
-				1.0f,
-				default_interp_mode, 
-				&atlas_rect);
-		}
-		else
-		{
-			d2d1_render_target->DrawBitmap(
-					bitmap,
-					draw_rect, 
-					1.0f,
-					default_interp_mode, 
-					NULL);
-		}
-			
-		d2d1_render_target->SetTransform(D2D1::Matrix3x2F::Identity());
+	    coordinates<float> resolution = get_resolution();
+	    coordinates<float> screen_center = { resolution.x / 2.0f, resolution.y / 2.0f };
+	
+	    // Calculate screen coordinates from world coordinates
+	    coordinates<float> screen_coords = world_to_screen(map_location, 0); // Assuming z = 0 for simplicity
+	
+	    // Check if the sprite is within the visible screen area
+	    if (screen_coords.x - dimensions.x * zoom_level > resolution.x || screen_coords.x + dimensions.x * zoom_level < 0)
+	    {
+	        return;
+	    }
+	
+	    if (screen_coords.y - dimensions.y * zoom_level > resolution.y || screen_coords.y + dimensions.y * zoom_level < 0)
+	    {
+	        return;
+	    }
+	
+	    // Adjust dimensions for zoom level
+	    coordinates<float> zoomed_dimensions = dimensions;
+	    zoomed_dimensions.x *= zoom_level;
+	    zoomed_dimensions.y *= zoom_level;
+	
+	    // Define the drawing rectangle
+	    D2D1_RECT_F draw_rect = D2D1::RectF(
+	        screen_coords.x - (zoomed_dimensions.x / 2), screen_coords.y - zoomed_dimensions.y + 18.0f, 
+	        screen_coords.x + (zoomed_dimensions.x / 2), screen_coords.y + 18.0f
+	    );
+	
+	    // Draw the shadow
+	    draw_unit_shadow({draw_rect.left + zoomed_dimensions.x / 1.667f, draw_rect.bottom - zoomed_dimensions.y / 5.67f}, 36.0f);
+	
+	    // Flip the atlas if needed
+	    if (atlas_dimensions.x < 0)
+	    {
+	        D2D1_POINT_2F center = D2D1::Point2F(screen_coords.x, screen_coords.y - (zoomed_dimensions.y / 2.0f));
+	        atlas_dimensions.x = std::abs(atlas_dimensions.x);
+	        D2D1_MATRIX_3X2_F transform = D2D1::Matrix3x2F::Translation(-center.x, -center.y) *
+	                                      D2D1::Matrix3x2F::Scale(-1.0f, 1.0f) *
+	                                      D2D1::Matrix3x2F::Translation(center.x, center.y);
+	        d2d1_render_target->SetTransform(transform);
+	    }
+	
+	    // Define the atlas rectangle
+	    D2D1_RECT_F atlas_rect = D2D1::RectF(
+	        atlas_location.x, atlas_location.y,
+	        atlas_location.x + atlas_dimensions.x, atlas_location.y + atlas_dimensions.y
+	    );
+	
+	    // Draw the bitmap
+	    if (atlas_dimensions)
+	    {
+	        d2d1_render_target->DrawBitmap(
+	            bitmap,
+	            draw_rect, 
+	            1.0f,
+	            default_interp_mode, 
+	            &atlas_rect);
+	    }
+	    else
+	    {
+	        d2d1_render_target->DrawBitmap(
+	            bitmap,
+	            draw_rect, 
+	            1.0f,
+	            default_interp_mode, 
+	            NULL);
+	    }
+	
+	    // Reset the transform
+	    d2d1_render_target->SetTransform(D2D1::Matrix3x2F::Identity());
 	}
 	
 	void draw_map_tile(ID2D1Bitmap* bitmap, coordinates<float> dimensions, coordinates<float> map_location, float tile_size)
 	{
-		coordinates<float> resolution = get_resolution();
-		
-		float dx = (map_location.x - render_viewpoint.x);
-		float dy = (map_location.y - render_viewpoint.y);
-		
-		float x_on_window;
-		float y_on_window;
-		
-		coordinates<float> isometric_coords;
-		x_on_window = (dx + dy) * (dimensions.x/2)/tile_size;
-		y_on_window = (dx - dy) * (dimensions.y/2)/tile_size;
-		
-		if (x_on_window-dimensions.x > resolution.x || x_on_window+dimensions.x < 0)
-		{
-			return;
-		}
-		
-		if (y_on_window-dimensions.y > resolution.y || y_on_window+dimensions.y < 0)
-		{
-			return;
-		}
-		
-		dimensions.y *= zoom_level;
-		dimensions.x *= zoom_level;
-			
-		D2D1_RECT_F draw_rect =
-			D2D1::RectF
-			(
-				x_on_window, y_on_window, 
-				x_on_window+dimensions.x, y_on_window+dimensions.y
-			);
-		
-		d2d1_render_target->DrawBitmap(
-			bitmap,
-			draw_rect, 
-			1.0f,
-			default_interp_mode, 
-			NULL);
+	    coordinates<float> resolution = get_resolution();
+	    coordinates<float> screen_center = { resolution.x / 2.0f, resolution.y / 2.0f };
+	
+	    // Calculate screen coordinates from world coordinates
+	    coordinates<float> screen_coords = world_to_screen(map_location, 0); // Assuming z = 0 for simplicity
+	
+	    // Check if the tile is within the visible screen area
+	    if (screen_coords.x - dimensions.x * zoom_level > resolution.x || screen_coords.x + dimensions.x * zoom_level < 0)
+	    {
+	        return;
+	    }
+	
+	    if (screen_coords.y - dimensions.y * zoom_level > resolution.y || screen_coords.y + dimensions.y * zoom_level < 0)
+	    {
+	        return;
+	    }
+	
+	    // Adjust dimensions for zoom level
+	    coordinates<float> zoomed_dimensions = dimensions;
+	    zoomed_dimensions.x *= zoom_level;
+	    zoomed_dimensions.y *= zoom_level;
+	
+	    // Define the drawing rectangle
+	    D2D1_RECT_F draw_rect = D2D1::RectF(
+	        screen_coords.x - (zoomed_dimensions.x / 2), screen_coords.y - zoomed_dimensions.y, 
+	        screen_coords.x + (zoomed_dimensions.x / 2), screen_coords.y
+	    );
+	
+	    // Draw the bitmap
+	    d2d1_render_target->DrawBitmap(
+	        bitmap,
+	        draw_rect,
+	        1.0f,
+	        default_interp_mode,
+	        NULL);
 	}
 	
 	void draw_entity_rect(coordinates<float> dimensions, coordinates<float> map_location, ProjectionMode projection)

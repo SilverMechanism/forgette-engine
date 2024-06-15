@@ -13,18 +13,7 @@ export
 	public:
 		Device();
 		
-		Action* action;
-		
-		void (*process_executor)(Unit*, Action*) = nullptr;
-		
-		template <typename T>
-		void use(Unit* executor, T& target)
-		{
-			if (process_executor)
-			{
-				process_executor(executor, action);
-			}
-			action->try_execute(target);
-		}
+		template<typename T>
+		void use(Unit* user, T& target);
 	};
 }
