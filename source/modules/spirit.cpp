@@ -76,10 +76,10 @@ void Spirit::game_update(float delta_time)
 
 bool Spirit::should_retreat()
 {
-	if (vessel.get() && vessel.get()->health < 25.0f)
+	/* if (vessel.get() && vessel.get()->health < 25.0f)
 	{
 		return true;
-	}
+	} */
 	
 	return false;
 }
@@ -128,7 +128,7 @@ void Spirit::wander()
 		target_active = false;
 		resting = true;
 		TimerManager* timer_manager = TimerManager::Instance();
-		th_rest = timer_manager->CreateTimer(3.0f, [this](){resting = false;});
+		th_rest = timer_manager->CreateTimer(3.0f, [this](int calls){resting = false;});
 	}
 }
 

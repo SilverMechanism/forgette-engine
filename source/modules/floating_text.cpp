@@ -19,10 +19,16 @@ void FloatingText::game_update(float delta_time)
 	set_map_location(get_map_location()+ (drift * delta_time));
 }
 
-void FloatingText::render_update()
+void FloatingText::render_update(RenderGroup rg)
 {
 	coordinates<float> screen_location = ForgetteDirectX::world_to_screen(get_map_location(), z);
-	ForgetteDirectX::draw_text(text, screen_location, size);
+	ForgetteDirectX::draw_text(
+		text, 
+		screen_location, 
+		size, 
+		true, 
+		false, 
+		color);
 }
 
 FloatingText::FloatingText()
@@ -30,6 +36,5 @@ FloatingText::FloatingText()
 	display_name = "Floating Text";
 	should_game_update = true;
 	should_render_update = true;
-	collision_enabled = false;
 	render_group = RenderGroup::Debug;
 }

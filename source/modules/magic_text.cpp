@@ -3,24 +3,34 @@ module magic_text;
 
 import directx;
 import unit;
+import health_element;
+import collision_element;
 
 MagicText::MagicText()
 {
-	collision_enabled = true;
-	radius = 8.0f;
+	add_element<CollisionElement>();
+	CollisionElement* ce = get_element<CollisionElement>();
+	ce->on_collision = [this](Unit* other_unit) { on_collision(other_unit); };
+	ce->collision_enabled = true;
+	ce->radius = 8.0f;
 	
-	collision_group = CollisionGroup::Projectile;
-	collides_with.insert(CollisionGroup::Unit);
+	ce->collision_group = CollisionGroup::Projectile;
+	ce->collides_with.insert(CollisionGroup::Unit);
 }
 
 void MagicText::on_collision(Unit* other_unit)
 {
 	pending_deletion = true;
-	other_unit->damage(10.0f);
+	
+	
+	if (HealthElement* he = other_unit->get_element<HealthElement>())
+	{
+		he->damage(10.0f);
+	}
 }
 
-void MagicText::render_update()
+void MagicText::render_update(RenderGroup rg)
 {
-	FloatingText::render_update();
+	FloatingText::render_update(rg);
 	ForgetteDirectX::draw_unit_shadow(ForgetteDirectX::world_to_screen(get_map_location()), 18.0f);
 }

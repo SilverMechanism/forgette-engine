@@ -1,6 +1,7 @@
 module;
 #include <cassert>
 #include <cwchar>
+#include "defines.h"
 #ifdef WIN64
 	#include <windows.h>
 #endif
@@ -130,9 +131,42 @@ std::atomic_flag new_in_progress;
 
 export 
 {
+	
+	enum class Command : uint8
+	{
+		Fallback,
+		Primary,
+		Secondary,
+		Pulse
+	};
+	
+	struct ColorParams
+	{
+		ColorParams(float _red, float _green, float _blue, float _alpha)
+			:	red(_red), green(_green), blue(_blue), alpha(_alpha)
+		{
+			
+		}
+		
+		ColorParams()
+		{
+			red = 0.8f;
+			green = 0.8f;
+			blue = 0.8f;
+			alpha = 1.0f;
+		}
+		
+		float red;
+		float green;
+		float blue;
+		float alpha;
+	};
+	
 	enum class RenderGroup : std::uint8_t
 	{
+		PreGame,
 		Game,
+		PostGame,
 		UI,
 		Debug
 	};
@@ -144,7 +178,7 @@ export
 		Prop
 	};
 	
-	void safePrint(const char* msg) {
+	/* void safePrint(const char* msg) {
 	    OutputDebugStringA(msg);
 	}
 
@@ -167,7 +201,7 @@ export
 	
 	    new_in_progress.clear();  // Clear flag to allow further allocations
 	    return ptr;
-	}
+	} */
 	
 	std::wstring get_exe_path();
 	std::wstring get_exe_dir();
@@ -330,6 +364,15 @@ export
 	    {
 	    	return coordinates<float>(to_look_at.x - this->x, to_look_at.y - this->y).normalize();
 	    }
+	};
+	
+	struct Target
+	{
+		Target(class Unit* target_unit, coordinates<float> target_location)
+			:	unit(target_unit), location(target_location) {}
+		
+		class Unit* unit;
+		coordinates<float> location;
 	};
 	
 	// Custom hash combination function

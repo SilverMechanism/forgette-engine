@@ -75,7 +75,7 @@
       <ConformanceMode>true</ConformanceMode>
       <LanguageStandard>stdcpplatest</LanguageStandard>
       <BuildStlModules>true</BuildStlModules>
-      <AdditionalIncludeDirectories>..\source\modules\;..\source\;..\source\modules\include\;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>..\source\modules\;..\source\;..\source\modules\include\;%(AdditionalIncludeDirectories);$(WWISESDK)\include</AdditionalIncludeDirectories>
       <EnableEnhancedInstructionSet>AdvancedVectorExtensions2</EnableEnhancedInstructionSet>
       <RuntimeLibrary>MultiThreadedDebug</RuntimeLibrary>
       <TreatWarningAsError>true</TreatWarningAsError>
@@ -86,8 +86,8 @@
     <Link>
       <SubSystem>Windows</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
-      <AdditionalLibraryDirectories>..\source\modules\include\luajit;..\source\modules\include\sqlitecpp;..\source\modules\include\sqlite3;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
-      <AdditionalDependencies>dxguid.lib;dwrite.lib;d3d11.lib;dxgi.lib;d2d1.lib;windowscodecs.lib;luajit.lib;lua51.lib;minilua.lib;buildvm.lib;SQLiteCpp.lib;sqlite3.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalLibraryDirectories>..\source\modules\include\fmod;..\source\modules\include\luajit;..\source\modules\include\sqlitecpp;..\source\modules\include\sqlite3;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalDependencies>fmodstudio_vc.lib;fmod_vc.lib;dxguid.lib;dwrite.lib;d3d11.lib;dxgi.lib;d2d1.lib;windowscodecs.lib;luajit.lib;lua51.lib;minilua.lib;buildvm.lib;SQLiteCpp.lib;sqlite3.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
@@ -100,7 +100,7 @@
       <ConformanceMode>true</ConformanceMode>
       <LanguageStandard>stdcpplatest</LanguageStandard>
       <BuildStlModules>true</BuildStlModules>
-      <AdditionalIncludeDirectories>..\source\modules\;..\source\;..\source\modules\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>..\source\modules\;..\source\;..\source\modules\include;%(AdditionalIncludeDirectories);$(WWISESDK)\include</AdditionalIncludeDirectories>
       <EnableEnhancedInstructionSet>AdvancedVectorExtensions2</EnableEnhancedInstructionSet>
       <RuntimeLibrary>MultiThreadedDebug</RuntimeLibrary>
       <TreatWarningAsError>true</TreatWarningAsError>
@@ -112,7 +112,7 @@
       <OptimizeReferences>true</OptimizeReferences>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <AdditionalLibraryDirectories>..\source\modules\include\luajit;..\source\modules\include\sqlitecpp;..\source\modules\include\sqlite3;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
-      <AdditionalDependencies>dxguid.lib;dwrite.lib;d3d11.lib;dxgi.lib;d2d1.lib;windowscodecs.lib;luajit.lib;lua51.lib;minilua.lib;buildvm.lib;SQLiteCpp.lib;sqlite3.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>fmod_vc.lib;dxguid.lib;dwrite.lib;d3d11.lib;dxgi.lib;d2d1.lib;windowscodecs.lib;luajit.lib;lua51.lib;minilua.lib;buildvm.lib;SQLiteCpp.lib;sqlite3.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
   </ItemDefinitionGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />

@@ -5,6 +5,7 @@ import sprite;
 import movement;
 import core;
 import helpers;
+import directx;
 
 export
 {
@@ -18,11 +19,9 @@ export
 			type = EntityType::Unit;
 		}
 		
-		bool collision_enabled = true;
-		
 		std::vector<ptr::watcher<Unit>> welded_units;
 		
-		virtual void render_update() override;
+		virtual void render_update(RenderGroup rg) override;
 		virtual void game_update(float delta_time) override;
 		
 		void set_sprite(std::string new_sprite_name);
@@ -34,39 +33,15 @@ export
 		float radius = 8.0f;
 		Movement movement;
 		
-		float health = 100.f;
-		
-		void damage(float amount)
-		{
-			health -= amount;
-			Helpers::create_floating_text(
-				std::to_string(static_cast<int>(amount)), 
-				16.0f, 
-				get_map_location(), 
-				1.0f, 
-				coordinates<float>(0.0f, 100.0f).view_isometric(), 
-				RenderGroup::Debug, 
-				16.0f);
-			
-			if (health <= 0.0f)
-			{
-				pending_deletion = true;
-			}
-		}
-		
 		coordinates<float> map_location;
 		coordinates<float> get_map_location() const;
 		void set_map_location(coordinates<float> new_map_location);
 		
-		virtual void on_collision(Unit* other_unit) {};
+		virtual void on_death()
+		{
 		
-		std::vector<std::int64_t> ignored_entities;
+		}
 		
-		// The collision group this unit belongs to
-		CollisionGroup collision_group = CollisionGroup::Unit;
-		
-		// Both units being checked must collide with each others group for a collision to take place
-		std::set<CollisionGroup> collides_with;
 	protected:
 		
 		std::string sprite_name;
@@ -86,11 +61,14 @@ void Unit::game_update(float delta_time)
 	}
 }
 
-void Unit::render_update()
+void Unit::render_update(RenderGroup rg)
 {
-	if (Sprite* sprite_ptr = sprite.get())
+	if (rg == RenderGroup::Game)
 	{
-		sprite_ptr->render_to_map(get_map_location(), true);
+		if (Sprite* sprite_ptr = sprite.get())
+		{
+			sprite_ptr->render_to_map(get_map_location(), true);
+		}
 	}
 	
 	// std::cout << "Entity " << id << " using location for rendering: " << std::string(get_map_location()) << std::endl;

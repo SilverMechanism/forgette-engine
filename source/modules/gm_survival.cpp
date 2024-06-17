@@ -12,7 +12,7 @@ import timers;
 void GM_Survival::spawn_wave()
 {
 	TimerManager* timer_manager = TimerManager::Instance();
-	timer_manager->CreateTimer(3.0f, [this]()
+	timer_manager->CreateTimer(3.0f, [this](int calls)
 	{ 
 		ptr::watcher<Villager> new_villager;
 		ptr::watcher<Spirit> new_spirit;

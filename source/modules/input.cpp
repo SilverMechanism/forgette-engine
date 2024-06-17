@@ -159,6 +159,42 @@ export namespace input
 		return true;
 	}
 	
+	bool RemoveInputBinding(std::string name, KeyEventType event_type, int priority)
+	{
+	    int key = key_bindings[name];
+	    
+	    assert(key < 254); // Exceeds Windows virtual key codes
+	
+	    if (event_type == KeyEventType::key_down)
+	    {
+	        if (priority < input_binds[key].key_down_bindings.size())
+	        {
+	            input_binds[key].key_down_bindings.erase(input_binds[key].key_down_bindings.begin() + priority);
+	        }
+	        else
+	        {
+	            return false; // Priority out of range
+	        }
+	    }
+	    else if (event_type == KeyEventType::key_up)
+	    {
+	        if (priority < input_binds[key].key_up_bindings.size())
+	        {
+	            input_binds[key].key_up_bindings.erase(input_binds[key].key_up_bindings.begin() + priority);
+	        }
+	        else
+	        {
+	            return false; // Priority out of range
+	        }
+	    }
+	    else
+	    {
+	        return false; // Invalid event type
+	    }
+	
+	    return true;
+	}
+		
 	bool map_key(std::string name, int key, bool overwrite)
 	{
 		assert(key < 255);
@@ -262,7 +298,7 @@ class WO_RawInputObserver : public win_compat::WindowObserver
 				// coordinates<int> resolution = ForgetteDirectX::get_resolution();
 				// std::cout << std::string(cursor_location) << std::endl << std::string(resolution);
 				
-				bool constrain_mouse = true;
+				bool constrain_mouse = false;
 				if (constrain_mouse)
 				{
 					coordinates<int> resolution = ForgetteDirectX::get_resolution();

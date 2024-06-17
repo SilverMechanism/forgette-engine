@@ -1,6 +1,7 @@
 module;
 #include "defines.h"
 export module debug_unit;
+
 import core;
 import unit;
 import input;
@@ -12,6 +13,8 @@ import directx;
 import debug_device;
 import forgette;
 import helpers;
+import health_element;
+import collision_element;
 
 const std::unordered_map<std::string, std::uint8_t> angles =
 {
@@ -49,6 +52,8 @@ export
 		
 		int to_sheet_frame(coordinates<float> vec);
 		
+		virtual void on_death() override;
+		
 	protected:
 		void set_sprite_direction();
 		void set_sprite_direction_mouse();
@@ -61,10 +66,6 @@ DebugUnit::DebugUnit()
 {
 	display_name = "Debug Unit";
 	sprite_name = "waifu";
-	
-	collides_with.insert(CollisionGroup::Unit);
-	collides_with.insert(CollisionGroup::Projectile);
-	collides_with.insert(CollisionGroup::Prop);
 	
 	should_game_update = true;
 	
@@ -93,9 +94,26 @@ DebugUnit::DebugUnit()
 	
 	binds["primary"] =		[this]()
 	{
-		coordinates<float> target = get_map_location();
-		this->debug_device->use(this, target);
+		coordinates<float> target_location = get_map_location();
+		Target target = Target(nullptr, target_location);
+		this->debug_device->use(Command::Primary, this, target);
 	};
+	
+	binds["secondary"] =	[this]()
+	{
+		coordinates<float> target_location = get_map_location();
+		Target target = Target(nullptr, target_location);
+		this->debug_device->use(Command::Secondary, this, target);
+	};
+	
+	add_element<HealthElement>();
+	
+	add_element<CollisionElement>();
+	CollisionElement* ce = get_element<CollisionElement>();
+	
+	ce->collides_with.insert(CollisionGroup::Unit);
+	ce->collides_with.insert(CollisionGroup::Projectile);
+	ce->collides_with.insert(CollisionGroup::Prop);
 }
 
 void DebugUnit::game_update(float delta_time)
@@ -148,6 +166,11 @@ void DebugUnit::set_sprite_direction_mouse()
 	
 	// coordinates<float> vec = get_map_location().towards(input::get_cursor_map_location()).isometric().normalize();
 	frame = to_sheet_frame(vec);
+}
+
+void DebugUnit::on_death()
+{
+	
 }
 
 int DebugUnit::to_sheet_frame(coordinates<float> vec)

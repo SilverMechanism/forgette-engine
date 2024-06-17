@@ -12,7 +12,7 @@ export
 	{
 	public:
 		MagicText();
-		virtual void on_collision(Unit* other_unit) override;
-		virtual void render_update() override;
+		void on_collision(Unit* other_unit);
+		virtual void render_update(RenderGroup rg) override;
 	};
 }

@@ -73,8 +73,11 @@ void check_hr(std::string message, HRESULT hr)
 export namespace ForgetteDirectX
 {
 	ComPtr<ID2D1SolidColorBrush> sc_brush;
+	ComPtr<ID2D1SolidColorBrush> black_brush;
+	ComPtr<ID2D1SolidColorBrush> generic_brush; // Be sure to set the color of this brush every time you use it.
 	
-	void draw_text(std::string text, coordinates<float> screen_position, float text_size);
+	void draw_text(std::string text, coordinates<float> screen_position, float text_size, bool drop_shadow = false, bool zoom_independent = true, ColorParams color = {1.0f, 1.0f, 1.0f, 1.0f});
+	void draw_image(ID2D1Bitmap* bitmap, coordinates<float> screen_location, float scale = 1.0f);
 	
 	coordinates<float> world_to_screen(coordinates<float> world_coords, float z = 0.0f);
 	coordinates<float> screen_to_world(coordinates<float> screen_coords);
@@ -136,6 +139,7 @@ export namespace ForgetteDirectX
 	
 	void draw_map_tile(ID2D1Bitmap* bitmap, coordinates<float> dimensions, coordinates<float> map_location, float tile_size);
 	
+	void draw_circle(ColorParams color, coordinates<float> location, float radius, bool zoom_independent=false);
 	void draw_unit_shadow(coordinates<float> screen_location, float radius);
 	
 	void draw_facing_helper(const coordinates<float> direction = {1.0f, 0.0f});
@@ -150,7 +154,23 @@ namespace ForgetteDirectX
 	coordinates<float> viewpoint_anchor;
 	float zoom_level {1.5f};
 	
-	void draw_text(std::string text, coordinates<float> screen_position, float text_size)
+	void draw_image(ID2D1Bitmap* bitmap, coordinates<float> screen_location, float scale)
+	{
+		D2D1_SIZE_F bitmap_size = bitmap->GetSize();
+		
+		D2D1_RECT_F draw_rect = 
+			D2D1::RectF(screen_location.x, screen_location.y, 
+			screen_location.x+(bitmap_size.width*scale), screen_location.y+(bitmap_size.height*scale));
+			
+		d2d1_render_target->DrawBitmap(
+	            bitmap,
+	            draw_rect, 
+	            1.0f,
+	            default_interp_mode, 
+	            NULL);
+	}
+	
+	void draw_text(std::string text, coordinates<float> screen_position, float text_size, bool drop_shadow, bool zoom_independent, ColorParams color)
 	{
 	    coordinates<float> resolution = get_resolution();
 	    HRESULT hr;
@@ -159,7 +179,10 @@ namespace ForgetteDirectX
 	    ComPtr<IDWriteTextFormat> text_format;
 	    ComPtr<IDWriteTextLayout> text_layout;
 	    
-	    text_size *= zoom_level;
+	    if (!zoom_independent)
+	    {
+	    	text_size *= zoom_level;
+	    }
 	
 	    hr = dwrite_factory->CreateTextFormat(
 	        L"Old English Text MT",
@@ -194,12 +217,22 @@ namespace ForgetteDirectX
 	    // Calculate the centered position
 	    float centered_x = screen_position.x - (text_metrics.width / 2.0f);
 	    float centered_y = screen_position.y - (text_metrics.height / 2.0f);
-	
+	    
+	    if (drop_shadow)
+	    {
+		    d2d1_render_target->DrawTextLayout(
+		        D2D1::Point2F(centered_x+(text_size*0.025f), centered_y+(text_size*0.025f)),
+		        text_layout.Get(),
+		        black_brush.Get(),
+		        D2D1_DRAW_TEXT_OPTIONS_NONE);
+	    }
+		
+		generic_brush->SetColor({color.red, color.green, color.blue, color.alpha});
 	    // Draw the text at the centered position
 	    d2d1_render_target->DrawTextLayout(
 	        D2D1::Point2F(centered_x, centered_y),
 	        text_layout.Get(),
-	        sc_brush.Get(),
+	        generic_brush.Get(),
 	        D2D1_DRAW_TEXT_OPTIONS_NONE);
 	}
 	
@@ -289,6 +322,22 @@ namespace ForgetteDirectX
 	ID2D1GradientStopCollection* pGradientStops = nullptr;
 	ID2D1RadialGradientBrush* pRadialGradientBrush = nullptr;
 	D2D1_MATRIX_3X2_F shadow_rotation;
+	
+	void draw_circle(ColorParams color, coordinates<float> location, float radius, bool zoom_independent)
+	{
+		if (!zoom_independent)
+		{
+			radius *= zoom_level;
+		}
+		
+		location = world_to_screen(location);
+		D2D1_ELLIPSE shape = D2D1::Ellipse({location.x, location.y}, radius, radius/2);
+	    
+		generic_brush->SetColor({color.red, color.green, color.blue, color.alpha});
+	
+		// Draw the ellipse
+		d2d1_render_target->FillEllipse(&shape, generic_brush.Get());
+	}
 
 	void draw_unit_shadow(coordinates<float> screen_location, float radius)
 	{
@@ -463,26 +512,6 @@ namespace ForgetteDirectX
 	        1.0f,
 	        default_interp_mode,
 	        NULL);
-	}
-	
-	void draw_entity_rect(coordinates<float> dimensions, coordinates<float> map_location, ProjectionMode projection)
-	{
-		coordinates<float> resolution = get_resolution();
-		
-		float dx = (map_location.x - render_viewpoint.x);
-		float dy = (map_location.y + render_viewpoint.y);
-		
-		if (projection == ProjectionMode::Ratio2_1)
-		{
-			dy *= 0.5;
-		}
-		
-		float x_on_window = (dx + (resolution.x / 2));
-		float y_on_window = (dy + (resolution.y / 2));
-		
-		D2D1_RECT_F draw_rect = D2D1::RectF(x_on_window-(dimensions.x/2), y_on_window-dimensions.y, x_on_window+(dimensions.x/2), y_on_window);
-		
-		d2d1_render_target->FillRectangle(draw_rect, sc_brush.Get());
 	}
 	
 	ID2D1Bitmap* create_bitmap_from_file(std::wstring filepath)
@@ -706,7 +735,21 @@ namespace ForgetteDirectX
 			return false;
 		}
 		d2d1_render_target = std::unique_ptr<ID2D1RenderTarget>(new_render_target);
-
+		
+		hr = d2d1_render_target->CreateSolidColorBrush(D2D1::ColorF(D2D1::ColorF::Black), &black_brush);
+		if (FAILED(hr))
+		{
+			std::println("Failed to create solid color brush.");
+			return false;
+		}
+		
+		hr = d2d1_render_target->CreateSolidColorBrush(D2D1::ColorF(D2D1::ColorF::DarkSlateBlue), &generic_brush);
+		if (FAILED(hr))
+		{
+			std::println("Failed to create solid color brush.");
+			return false;
+		}
+		
 		hr = d2d1_render_target->CreateSolidColorBrush(D2D1::ColorF(D2D1::ColorF::Silver), &sc_brush);
 		if (FAILED(hr))
 		{
@@ -779,17 +822,24 @@ namespace ForgetteDirectX
 	void present(bool vsync)
 	{
 		check_hr("EndDraw", d2d1_render_target->EndDraw());
-
 		swap_chain->Present(1, 0);
 	}
 
 	coordinates<float> get_resolution()
 	{
-		win_compat::Window& window = win_compat::Window::instance();
-		RECT client_rect;
-		GetWindowRect(window.handle, &client_rect);
-
-		return { float(client_rect.right - client_rect.left), float(client_rect.bottom - client_rect.top) };
+		static bool cached = false;
+		static coordinates<float> resolution;
+		
+		if (!cached)
+		{
+			win_compat::Window& window = win_compat::Window::instance();
+			RECT client_rect;
+			GetWindowRect(window.handle, &client_rect);
+			resolution = { float(client_rect.right - client_rect.left), float(client_rect.bottom - client_rect.top) };
+			cached = true;
+		}
+		
+		return resolution;
 	}
 	
 	D2D1_RECT_F get_resolution_rect()

@@ -1,7 +1,8 @@
 module;
 #include <windows.h>
 #include <assert.h>
-export module forgette;
+module forgette;
+
 import gfx;
 import std;
 import windows;
@@ -15,136 +16,15 @@ import lua_manager;
 import movement;
 import unit;
 import game_map;
-
-export namespace Forgette
-{
-	enum class Mode : byte
-	{
-		not_set,
-		in_menu,
-		in_map
-	};
-	
-	class Engine
-	{
-	public:
-		Engine();
-		~Engine();
-
-		TimerManager* timer_manager;
-
-		void initialize_graphics(HINSTANCE hInstance, int nCmdShow);
-		
-		// No params = load blank map
-		void load_game_map(std::wstring script_path);
-
-		void loop();
-
-		bool healthy = true;
-
-		std::vector<ptr::keeper<Entity>> entities;
-		std::vector<ptr::keeper<Entity>> new_spawns;
-		
-		void update_render_viewpoint(coordinates<float> new_viewpoint);
-		
-		Entity* player_viewpoint = nullptr;
-		
-		std::wstring get_application_dir();
-		
-		ptr::keeper<GameMap> active_map;
-		
-		std::int64_t entity_counter = 0;
-		
-		std::map<std::uint8_t, std::vector<std::function<bool(float)>>> render_functions;
-		
-		template<typename T>
-		void spawn_entity(coordinates<float> world_location)
-		{
-			T* spawn = new T();
-			spawn->id = entity_counter;
-			
-			ptr::keeper<Entity> keeper = ptr::keeper<Entity>(spawn);
-			
-			if (Unit* unit = dynamic_cast<Unit*>(spawn))
-			{
-				unit->set_map_location(world_location);
-			}
-			
-			new_spawns.push_back(std::move(keeper));
-			
-			spawn->on_spawn();
-			entity_counter++;
-		}
-		
-		template<typename T>
-		void spawn_entity(coordinates<float> world_location, ptr::watcher<T> &new_watcher)
-		{
-			T* spawn = new T();
-			spawn->id = entity_counter;
-			
-			ptr::keeper<Entity> keeper = ptr::keeper<Entity>(spawn);
-			new_watcher = ptr::watcher<T>(keeper);
-			
-			if (Unit* unit = dynamic_cast<Unit*>(spawn))
-			{
-				unit->set_map_location(world_location);
-			}
-			
-			new_spawns.push_back(std::move(keeper));
-			
-			spawn->on_spawn();
-			entity_counter++;
-		}
-		
-		template<typename T>
-		void spawn_entity(ptr::watcher<T> &new_watcher)
-		{
-			T* spawn = new T();
-			spawn->id = entity_counter;
-			
-			ptr::keeper<Entity> keeper = ptr::keeper<Entity>(spawn);
-			new_watcher = ptr::watcher<T>(keeper);
-			
-			new_spawns.push_back(std::move(keeper));
-			
-			spawn->on_spawn();
-			entity_counter++;
-		}
-		
-		template<typename T>
-		void spawn_entity()
-		{
-			T* spawn = new T();
-			spawn->id = entity_counter;
-			new_spawns.push_back(ptr::keeper<Entity>(spawn));
-			
-			const ptr::keeper<Entity> &my_keeper = new_spawns.back();
-			
-			spawn->on_spawn();
-			entity_counter++;
-		}
-		
-		ptr::keeper<LuaManager> lua_manager = ptr::keeper<LuaManager>(nullptr);
-		
-		Player* create_player();
-
-	private:
-		Mode active_mode = Mode::not_set;
-		std::map<Mode, std::function<void()>> loop_functions;
-		void map_loop();
-		void setup_map();
-		void menu_loop();
-		ptr::watcher<Player> local_player;
-	};
-}
-
-export
-{
-	Forgette::Engine* get_engine();
-	void set_engine(Forgette::Engine* engine);
-}
+import sound;
+import collision_element;
 
 std::unique_ptr<Forgette::Engine> global_engine = nullptr;
+
+LuaManager* Forgette::Engine::get_lua_manager()
+{
+	return lua_manager.get();
+}
 
 Player* Forgette::Engine::create_player()
 {
@@ -191,19 +71,23 @@ namespace Forgette
 		input::map_key("move_down", 0x0053, true);
 		input::map_key("move_left", 0x0041, true);
 		
+		Sound::initialize();
+		
 		std::cout << 
 		R"(
-═════════════════════════════════════════════════════════════════════
-█████████████████████████████████████████████████████████████████████
 
-███████╗ ██████╗ ██████╗  ██████╗ ███████╗████████╗████████╗███████╗
-██╔════╝██╔═══██╗██╔══██╗██╔════╝ ██╔════╝╚══██╔══╝╚══██╔══╝██╔════╝
-█████╗  ██║   ██║██████╔╝██║  ███╗█████╗     ██║      ██║   █████╗  
-██╔══╝  ██║   ██║██╔══██╗██║   ██║██╔══╝     ██║      ██║   ██╔══╝  
-██║     ╚██████╔╝██║  ██║╚██████╔╝███████╗   ██║      ██║   ███████╗
-╚═╝      ╚═════╝ ╚═╝  ╚═╝ ╚═════╝ ╚══════╝   ╚═╝      ╚═╝   ╚══════╝                                                                                                                                                                                                                  
-█████████████████████████████████████████████████████████████████████
-═════════════════════════════════════════════════════════════════════
+ ______   ______     ______     ______     ______     ______   ______   ______       
+/\  ___\ /\  __ \   /\  == \   /\  ___\   /\  ___\   /\__  _\ /\__  _\ /\  ___\      
+\ \  __\ \ \ \/\ \  \ \  __<   \ \ \__ \  \ \  __\   \/_/\ \/ \/_/\ \/ \ \  __\      
+ \ \_\    \ \_____\  \ \_\ \_\  \ \_____\  \ \_____\    \ \_\    \ \_\  \ \_____\    
+  \/_/     \/_____/   \/_/ /_/   \/_____/   \/_____/     \/_/     \/_/   \/_____/    
+                                                                                     
+ ______     __   __     ______     __     __   __     ______                         
+/\  ___\   /\ "-.\ \   /\  ___\   /\ \   /\ "-.\ \   /\  ___\                        
+\ \  __\   \ \ \-.  \  \ \ \__ \  \ \ \  \ \ \-.  \  \ \  __\                        
+ \ \_____\  \ \_\\"\_\  \ \_____\  \ \_\  \ \_\\"\_\  \ \_____\                      
+  \/_____/   \/_/ \/_/   \/_____/   \/_/   \/_/ \/_/   \/_____/    
+
 
 )";
 	}
@@ -237,19 +121,16 @@ namespace Forgette
 		ForgetteDirectX::prerender();
 		
 		timer_manager->ParseTimers();
-		timer_manager->ProcessCallbacks();
+		// timer_manager->ProcessCallbacks();
 
 		for (const auto& pair : input::active_down_binds)
 		{
 			pair.second.key_down_bindings[0]();
 		}
 		
-		/* if (local_player.get())
-		{
-			ForgetteDirectX::set_render_viewpoint(local_player->get_controlled_unit()->get_map_location());
-		} */
-		
 		loop_functions[active_mode]();
+		
+		Sound::studioSystem->update();
 
 		ForgetteDirectX::present(true);
 	}
@@ -279,51 +160,50 @@ namespace Forgette
 	    return map_location_a.y < map_location_b.y;
 	}
 	
-	bool check_collision(const Unit &unit1, const Unit &unit2)
+	void handle_collision(CollisionElement& ce1, CollisionElement& ce2, float delta_time)
 	{
-		coordinates<float> pos1 = unit1.get_map_location();
-		coordinates<float> pos2 = unit2.get_map_location();
+		Unit& unit1 = *dynamic_cast<Unit*>(ce1.get_owner());
+		Unit& unit2 = *dynamic_cast<Unit*>(ce2.get_owner());
 		
-		float distance = coordinates<float>(pos1.x - pos2.x, pos1.y - pos2.y).magnitude();
-		float collision_distance = unit1.radius + unit2.radius;
-		
-		return (distance < collision_distance);
-	}
-	
-	void handle_collision(Unit& unit1, Unit& unit2, float delta_time)
-	{
-		if (!unit1.collision_enabled || !unit2.collision_enabled)
+		if (!ce1.collision_enabled || !ce2.collision_enabled)
 		{
 			return;
 		}
 		
 	    coordinates<float> pos1 = unit1.get_map_location();
 	    coordinates<float> pos2 = unit2.get_map_location();
-	
+	    
 	    float dx = pos1.x - pos2.x;
 	    float dy = pos1.y - pos2.y;
 	    float distance = std::sqrt(dx * dx + dy * dy);
-	    float collision_distance = unit1.radius + unit2.radius;
+	    float collision_distance = ce1.radius + ce2.radius;
 	
 	    if (distance < collision_distance)
 	    {
-	    	if (!unit1.collides_with.count(unit2.collision_group) 
-	    		|| !unit2.collides_with.count(unit1.collision_group))
+	    	if (!ce1.collides_with.count(ce2.collision_group) 
+	    		|| !ce2.collides_with.count(ce1.collision_group))
 	    	{
 	    		return;
 	    	}
 	    	
-			const std::vector<std::int64_t>& ents1 = unit1.ignored_entities;
-			const std::vector<std::int64_t>& ents2 = unit2.ignored_entities;
+			const std::vector<std::int64_t>& ents1 = ce1.ignored_entities;
+			const std::vector<std::int64_t>& ents2 = ce2.ignored_entities;
+			
 			if (std::find(ents1.begin(), ents1.end(), unit2.id) != ents1.end()
 				|| std::find(ents2.begin(), ents2.end(), unit1.id) != ents2.end())
 			{
 				return;
 			}
 			
-			unit1.on_collision(&unit2);
-			unit2.on_collision(&unit1);
-
+			if (ce1.on_collision)
+			{
+				ce1.on_collision(&unit2);
+			}
+			if (ce2.on_collision)
+			{
+				ce2.on_collision(&unit1);
+			}
+			
 	        // Calculate the amount to rewind
 	        float overlap = collision_distance - distance;
 	        
@@ -364,7 +244,6 @@ namespace Forgette
 	
 	void Engine::map_loop()
 	{
-
 		if (!new_spawns.empty())
 		{
 			entities.insert(
@@ -388,15 +267,6 @@ namespace Forgette
 	        }
 	    }
 	    
-	    std::vector<Unit*> units;
-	    for (auto& entity : entities)
-	    {
-	    	if (Unit* unit = dynamic_cast<Unit*>(entity.get()))
-	    	{
-	    		units.push_back(unit);
-	    	}
-	    }
-	    
 		const float delta_time = timer_manager->get_delta_time();
 		
 		if (!active_map.get())
@@ -408,13 +278,21 @@ namespace Forgette
 		
 		std::sort(entities.begin(), entities.end(), z_compare);
 		
-		for (Unit* unit1 : units)
+		for (auto& unit1 : entities)
 		{
-			for (Unit* unit2 : units)
+			if (CollisionElement* ce1 = unit1->get_element<CollisionElement>())
 			{
-				if (unit1 != unit2)
+				for (auto& unit2 : entities)
 				{
-					handle_collision(*unit1, *unit2, delta_time);
+					if (unit1.get() == unit2.get())
+					{
+						continue;
+					}
+					
+					if (CollisionElement* ce2 = unit2->get_element<CollisionElement>())
+					{
+						handle_collision(*ce1, *ce2, delta_time);
+					}
 				}
 			}
 		}
@@ -434,10 +312,28 @@ namespace Forgette
 			{
 				// std::println("Did not run game update for {}", entity.get()->get_display_name());
 			}
+		}
+		
+		std::vector<RenderGroup> render_groups = {RenderGroup::PreGame, RenderGroup::Game, RenderGroup::PostGame, RenderGroup::UI, RenderGroup::Debug};
+		for (const RenderGroup& rg : render_groups)
+		{
+			if (rg == RenderGroup::PostGame)
+			{
+				if (GFX::top_bar_image && GFX::bottom_bar_image)
+				{
+					ForgetteDirectX::draw_image(GFX::top_bar_image, {0, 0});
+					ForgetteDirectX::draw_image(GFX::bottom_bar_image, {0, 1224});
+				}
+				
+				continue;
+			}
 			
-			if (entity.get()->should_render_update) 
-			{ 
-				entity.get()->render_update();
+			for (auto& entity : entities)
+			{
+				if (entity.get()->should_render_update) 
+				{ 
+					entity.get()->render_update(rg);
+				}
 			}
 		}
 		
@@ -449,6 +345,12 @@ namespace Forgette
                 	return !render_function(delta_time); // Remove functions that return false
             	}), 
             	function_vector.end());
+		}
+		
+		bool draw_cursor = true;
+		if (draw_cursor && GFX::cursor_image)
+		{
+			ForgetteDirectX::draw_image(GFX::cursor_image, input::get_cursor_screen_location(), 0.5f);
 		}
 	}
 	

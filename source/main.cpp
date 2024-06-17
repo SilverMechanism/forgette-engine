@@ -9,6 +9,7 @@ import input;
 import lua_interop;
 import core;
 import std;
+import lua_manager;
 
 MSG message;
 
@@ -103,7 +104,7 @@ wchar_t** argv = __wargv;
     }
 	ShowCursor(show_cursor);
 	
-	LuaInterop::register_functions(engine->lua_manager.get()->lua_state);
+	LuaInterop::register_functions(engine->get_lua_manager()->lua_state);
 	
 	// InvalidateRect(win_compat::Window::instance().handle, NULL, TRUE);
 

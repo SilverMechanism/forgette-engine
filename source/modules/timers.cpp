@@ -9,14 +9,17 @@ struct Timer
 	int handle = -1;
 	float remaining = 0;
 	float base = 0;
-	std::function<void()> callback;
+	std::function<void(int call)> callback;
 	int calls = 1;
+	int calls_made = 0;
 };
 
 export class TimerManager
 {
 private:
 	std::vector<Timer> Timers;
+	std::vector<Timer> new_timers;
+	
 	int running_handle = 0;
 	LARGE_INTEGER last_runtime;
 	double frequency = 0.0;
@@ -44,16 +47,16 @@ public:
 		}
 	}
 
-	int CreateTimer(float duration, std::function<void()> callback)
+	int CreateTimer(float duration, std::function<void(int call)> callback)
 	{
-		Timers.push_back(Timer{ running_handle, duration, duration, callback, 1 });
+		new_timers.push_back(Timer{ running_handle, duration, duration, callback, 1 });
 		++running_handle;
 		return running_handle - 1;
 	}
 
-	int CreateTimer(float duration, std::function<void()> callback, int calls)
+	int CreateTimer(float duration, std::function<void(int calls)> callback, int calls)
 	{
-		Timers.push_back(Timer{ running_handle, duration, duration, callback, calls });
+		new_timers.push_back(Timer{ running_handle, duration, duration, callback, calls });
 		++running_handle;
 		return running_handle - 1;
 	}
@@ -68,6 +71,16 @@ public:
 
 	void ParseTimers()
 	{
+		if (!new_timers.empty())
+		{
+			Timers.insert(
+				Timers.end(),
+				std::make_move_iterator(new_timers.begin()),
+				std::make_move_iterator(new_timers.end()));
+
+			new_timers.clear();
+		}
+		
 		LARGE_INTEGER new_runtime;
 		QueryPerformanceCounter(&new_runtime);
 		delta_time = double(new_runtime.QuadPart - last_runtime.QuadPart)/frequency;
@@ -79,8 +92,10 @@ public:
 				timer.remaining -= interval;
 				if (timer.remaining <= 0)
 				{
-					CallbackQueue.push_back(timer.callback);
+					// CallbackQueue.push_back(timer.callback);
+					timer.callback(timer.calls_made);
 					--timer.calls;
+					++timer.calls_made;
 					if (timer.calls <= 0)
 					{
 						return true;

@@ -50,6 +50,10 @@ export namespace GFX
 	raw_image* load_image_file(const std::wstring &filepath);
 	
 	std::vector<std::vector<RGB8>> get_image_colors(const std::wstring &filepath);
+	
+	raw_image* cursor_image = nullptr;
+	raw_image* top_bar_image = nullptr;
+	raw_image* bottom_bar_image = nullptr;
 }
 
 #ifdef WIN64
@@ -58,6 +62,10 @@ bool GFX::initialize()
 	// win_compat::Window &window = win_compat::Window::instance();
 	
 	ForgetteDirectX::initialize();
+	
+	cursor_image = load_image_file(get_exe_dir() + L"sprites\\silmech_cursor.png");
+	top_bar_image = load_image_file(get_exe_dir() + L"sprites\\top_bar.png");
+	bottom_bar_image = load_image_file(get_exe_dir() + L"sprites\\bottom_bar.png");
 	
 	return true;
 }
