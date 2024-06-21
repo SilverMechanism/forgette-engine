@@ -1,5 +1,6 @@
 module;
 export module entity;
+
 import core;
 import std;
 import directx;
@@ -7,9 +8,7 @@ import timers;
 import element;
 
 export
-{	
-	// Performance "enhancer"...
-	// Very fast way to check if something is dervied from Unit with no cast
+{
 	enum class EntityType : std::uint8_t
 	{
 		Phantom,
@@ -53,12 +52,13 @@ export
 		template<typename T>
 		T* get_element()
 		{
-			auto iterator = elements.find(typeid(T));
-			if (iterator != elements.end())
-			{
-				return static_cast<T*>(iterator->second.get());
-			}
-			return nullptr;
+		    static const std::type_index typeIndex = typeid(T);
+		    
+		    auto iterator = elements.find(typeIndex);
+		    if (iterator != elements.end()) {
+		        return static_cast<T*>(iterator->second.get());
+		    }
+		    return nullptr;
 		}
 
 		bool should_game_update = false;
@@ -72,6 +72,16 @@ export
 		
 		// Used for rendering purposes only
 		float z = 0.0f;
+		
+		void add_entity_identifier(EntityClass entity_class)
+		{
+			inheritance.insert(entity_class);
+		}
+		
+		bool is_entity(EntityClass entity_class)
+		{
+			return inheritance.find(entity_class) != inheritance.end();
+		}
 	protected:
 		// I would like to optimize this somehow
 		// Maybe make a constant base name
@@ -82,6 +92,7 @@ export
 		
 	private:
 		std::unordered_map<std::type_index, ptr::keeper<Element>> elements;
+		std::unordered_set<EntityClass> inheritance;
 	public:
 		EntityType get_type()
 		{

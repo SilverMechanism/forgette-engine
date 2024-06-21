@@ -79,7 +79,7 @@ export namespace ForgetteDirectX
 	void draw_text(std::string text, coordinates<float> screen_position, float text_size, bool drop_shadow = false, bool zoom_independent = true, ColorParams color = {1.0f, 1.0f, 1.0f, 1.0f});
 	void draw_image(ID2D1Bitmap* bitmap, coordinates<float> screen_location, float scale = 1.0f);
 	
-	coordinates<float> world_to_screen(coordinates<float> world_coords, float z = 0.0f);
+	coordinates<float> world_to_screen(coordinates<float> world_coords, float z = 0.0f, bool print_debug=false);
 	coordinates<float> screen_to_world(coordinates<float> screen_coords);
 	
 	enum class ProjectionMode : byte
@@ -134,11 +134,12 @@ export namespace ForgetteDirectX
 	
 	void set_render_viewpoint(coordinates<float> new_viewpoint);
 	
-	void draw_sprite_to_map(ID2D1Bitmap* bitmap, coordinates<float> dimensions, coordinates<float> map_location);
-	void draw_sprite_to_map(ID2D1Bitmap* bitmap, coordinates<float> dimensions, coordinates<float> map_location, coordinates<float> atlas_location, coordinates<float> atlas_size);
+	void draw_sprite_to_map(ID2D1Bitmap* bitmap, coordinates<float> dimensions, coordinates<float> map_location, float z = 0.0f);
+	void draw_sprite_to_map(ID2D1Bitmap* bitmap, coordinates<float> dimensions, coordinates<float> map_location, coordinates<float> atlas_location, coordinates<float> atlas_size, float z = 0.0f);
 	
 	void draw_map_tile(ID2D1Bitmap* bitmap, coordinates<float> dimensions, coordinates<float> map_location, float tile_size);
 	
+	void draw_square(ColorParams color, coordinates<float> top_left, float size, bool fill, bool zoom_independent=false);
 	void draw_circle(ColorParams color, coordinates<float> location, float radius, bool zoom_independent=false);
 	void draw_unit_shadow(coordinates<float> screen_location, float radius);
 	
@@ -282,8 +283,14 @@ namespace ForgetteDirectX
 	    return screen_coords;
 	}
 	
-	coordinates<float> world_to_screen(coordinates<float> world_coords, float z)
+	coordinates<float> world_to_screen(coordinates<float> world_coords, float z, bool print_debug)
 	{
+		if (print_debug)
+		{
+			std::cout << "WORLD TO SCREEN\n=====" << std::endl;
+			std::cout << "Pre transform: " << std::string(world_coords) << std::endl;
+		}
+		
 	    coordinates<float> resolution = get_resolution();
 	    coordinates<float> screen_center = { resolution.x / 2.0f, resolution.y / 2.0f };
 	    coordinates<float> screen_coords;
@@ -291,17 +298,48 @@ namespace ForgetteDirectX
 	    // Calculate the relative position to the render viewpoint
 	    world_coords.x = (world_coords.x - render_viewpoint.x);
 	    world_coords.y = (world_coords.y - render_viewpoint.y);
+	    
+	    if (print_debug)
+		{
+			std::cout << "Relative to render viewpoint: " << std::string(world_coords) << std::endl;
+		}
 	
 	    // Apply isometric transformation and Z-shift
-	    world_coords = world_coords.isometric().z_shift(z * 5.0f);
+	    if (!core_math::nearly_zero(z))
+	    {
+	    	world_coords = world_coords.isometric().z_shift(z * 5.0f);
+	    	if (print_debug)
+			{
+				std::cout << "Isometric (plus zshift): " << std::string(world_coords) << std::endl;
+			}
+	    }
+	    else
+	    {
+	    	world_coords = world_coords.isometric();
+	    	if (print_debug)
+			{
+				std::cout << "Isometric (no zshift): " << std::string(world_coords) << std::endl;
+			}
+	    }
 	
 	    // Apply zoom level
 	    world_coords.x *= zoom_level;
 	    world_coords.y *= zoom_level;
+	    
+	    if (print_debug)
+		{
+			std::cout << "Post zoom: " << std::string(world_coords) << std::endl;
+		}
 	
 	    // Adjust coordinates to be centered on the screen
 	    screen_coords.x = world_coords.x + screen_center.x;
 	    screen_coords.y = world_coords.y + screen_center.y;
+	    
+	    if (print_debug)
+		{
+			std::cout << "Final screen coords (added screen center): " << std::string(screen_coords) << std::endl;
+			std::cout << "=====\n";
+		}
 	
 	    return screen_coords;
 	}
@@ -322,6 +360,38 @@ namespace ForgetteDirectX
 	ID2D1GradientStopCollection* pGradientStops = nullptr;
 	ID2D1RadialGradientBrush* pRadialGradientBrush = nullptr;
 	D2D1_MATRIX_3X2_F shadow_rotation;
+	
+	void draw_square(ColorParams color, coordinates<float> top_left, float size, bool fill, bool zoom_independent)
+	{
+		coordinates<float> screen_top_left = world_to_screen(top_left, 0.0f);
+		
+		if (!zoom_independent)
+		{
+			size = size * zoom_level;
+		}
+		
+		D2D1_RECT_F rect = D2D1::RectF(
+			screen_top_left.x, screen_top_left.y,
+			screen_top_left.x + size, screen_top_left.y + size
+	    );
+	    
+	    // Create the rotation matrix
+		auto rotation_matrix = D2D1::Matrix3x2F::Rotation(-45.0f, {screen_top_left.x, screen_top_left.y});
+		
+		// Create the scaling matrix
+		auto scaling_matrix = D2D1::Matrix3x2F::Scale(1.0f, 0.5f, {screen_top_left.x, screen_top_left.y});
+		
+		// Concatenate the scaling matrix to the rotation matrix
+		auto combined_matrix = rotation_matrix * scaling_matrix;
+		
+        d2d1_render_target->SetTransform(combined_matrix);
+	    
+		generic_brush->SetColor({color.red, color.green, color.blue, color.alpha});
+		
+		d2d1_render_target->FillRectangle(&rect, generic_brush.Get());
+		
+		d2d1_render_target->SetTransform(D2D1::Matrix3x2F::Identity());
+	}
 	
 	void draw_circle(ColorParams color, coordinates<float> location, float radius, bool zoom_independent)
 	{
@@ -396,12 +466,12 @@ namespace ForgetteDirectX
 	    d2d1_render_target->DrawLine(C, A, sc_brush.Get(), 2.0f);
 	}
 	
-	void draw_sprite_to_map(ID2D1Bitmap* bitmap, coordinates<float> dimensions, coordinates<float> map_location)
+	void draw_sprite_to_map(ID2D1Bitmap* bitmap, coordinates<float> dimensions, coordinates<float> map_location, float z)
 	{
-		draw_sprite_to_map(bitmap, dimensions, map_location, coordinates<float>(), coordinates<float>());
+		draw_sprite_to_map(bitmap, dimensions, map_location, coordinates<float>(), coordinates<float>(), z);
 	}
 	
-	void draw_sprite_to_map(ID2D1Bitmap* bitmap, coordinates<float> dimensions, coordinates<float> map_location, coordinates<float> atlas_location, coordinates<float> atlas_dimensions)
+	void draw_sprite_to_map(ID2D1Bitmap* bitmap, coordinates<float> dimensions, coordinates<float> map_location, coordinates<float> atlas_location, coordinates<float> atlas_dimensions, float z)
 	{
 	    coordinates<float> resolution = get_resolution();
 	    coordinates<float> screen_center = { resolution.x / 2.0f, resolution.y / 2.0f };
@@ -427,12 +497,12 @@ namespace ForgetteDirectX
 	
 	    // Define the drawing rectangle
 	    D2D1_RECT_F draw_rect = D2D1::RectF(
-	        screen_coords.x - (zoomed_dimensions.x / 2), screen_coords.y - zoomed_dimensions.y + 18.0f, 
-	        screen_coords.x + (zoomed_dimensions.x / 2), screen_coords.y + 18.0f
+	        screen_coords.x - (zoomed_dimensions.x / 2), screen_coords.y - zoomed_dimensions.y + 18.0f - z, 
+	        screen_coords.x + (zoomed_dimensions.x / 2), screen_coords.y + 18.0f - z
 	    );
 	
 	    // Draw the shadow
-	    draw_unit_shadow({draw_rect.left + zoomed_dimensions.x / 1.667f, draw_rect.bottom - zoomed_dimensions.y / 5.67f}, 36.0f);
+	    draw_unit_shadow({draw_rect.left + zoomed_dimensions.x / 1.667f, z + draw_rect.bottom - zoomed_dimensions.y / 5.67f}, 36.0f);
 	
 	    // Flip the atlas if needed
 	    if (atlas_dimensions.x < 0)

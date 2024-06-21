@@ -66,8 +66,6 @@ std::vector<ptr::watcher<Entity>> Helpers::try_overlap(CollisionGroup collision_
 			bool ignore = false;
 			for (auto id_to_ignore : to_ignore)
 			{
-				std::cout << "To ignore: " << id_to_ignore << std::endl;
-				std::cout << "Unit ID: " << unit1.id << std::endl;
 				if (unit1.id == id_to_ignore)
 				{
 					ignore = true;
@@ -96,7 +94,7 @@ std::vector<ptr::watcher<Entity>> Helpers::try_overlap(CollisionGroup collision_
 		    		continue;
 		    	}
 				
-				std::cout << "Adding " << entity->id << " to list." << std::endl;
+				// std::cout << "Adding " << entity->id << " to list." << std::endl;
 				overlaps.push_back(ptr::watcher<Entity>(entity));
 		  	}
 		}

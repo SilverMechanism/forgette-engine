@@ -14,6 +14,13 @@ concept GameModeChild = std::is_base_of_v<GameMode, T>;
 
 export
 {
+	struct SectorInfo
+	{
+		coordinates<float> size;
+		coordinates<float> center;
+		Sector* sector = nullptr;
+	};
+	
 	// const coordinates<int> tile_size = coordinates<int>(128, 64);
 	// const coordinates<int> tile_atlas_size = coordinates<int>(256, 128);
 	// const int tile_scale = 1;
@@ -29,10 +36,19 @@ export
 		GameMap(coordinates<float> _sector_size, std::string _name, const coordinates<std::uint16_t> map_size_in_sectors);
 		~GameMap();
 		
+		// If an exact match to a sector location, return sector immediately
+		// Otherwise it will look for the sector that contains this point
+		// Do not store this pointer, as it may be made invalid
+		Sector* get_sector(coordinates<float> map_location);
+		SectorInfo get_sector_info(coordinates<float> map_location);
+		std::vector<Sector*> get_sector_grid(coordinates<float> map_location, int layer_size);
+		std::vector<SectorInfo> get_sector_info_grid(coordinates<float> map_location, int layer_size);
+		
 		ptr::watcher<GameMode> active_mode;
 		
 		const coordinates<float> map_size = {0.0f, 0.0f};
 		
+		std::unordered_map<coordinates<float>, Sector> sectors;
 		std::unordered_map<coordinates<float>, tile> tiles;
 		std::unordered_map<std::string, ptr::keeper<Sprite>> tileset;
 		
@@ -69,7 +85,6 @@ export
 		bool was_setup = false;
 		
 	private:
-		std::vector<std::vector<Sector>> sectors;
 		std::string name{ "Just Another Forgette Map" };
 		
 		ptr::keeper<GameMode> active_game_mode;

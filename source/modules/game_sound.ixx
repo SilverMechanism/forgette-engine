@@ -4,6 +4,7 @@ export module game_sound;
 
 import sound;
 import std;
+import core;
 
 export
 {
@@ -17,6 +18,7 @@ export
 		
 		std::string event_path;
 		
+		void play(coordinates<float> map_location);
 		void play();
 		void reload();
 		

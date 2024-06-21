@@ -3,9 +3,10 @@ export module spirit;
 import std;
 import core;
 import unit;
-import movement;
+import movement_element;
 import timers;
 import entity;
+import sprite;
 
 export
 {
@@ -91,7 +92,7 @@ void Spirit::attack_target()
 
 bool Spirit::should_wander()
 {
-	if (!vessel->movement.velocity)
+	if (!vessel->get_element<MovementElement>()->velocity)
 	{
 		wandering = false;
 		
@@ -121,7 +122,8 @@ void Spirit::wander()
 		target_active = true;
 	}
 	
-	vessel->movement.movement_input = vessel->movement.movement_input + vessel->get_map_location().towards(target_pos);
+	MovementElement* vessel_movement = vessel->get_element<MovementElement>();
+	vessel_movement->movement_input = vessel_movement->movement_input + vessel->get_map_location().towards(target_pos);
 	
 	if ((vessel->get_map_location() - target_pos).magnitude() < 3.0f)
 	{

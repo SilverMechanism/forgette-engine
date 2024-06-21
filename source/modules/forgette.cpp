@@ -13,11 +13,12 @@ import input;
 import core;
 import directx;
 import lua_manager;
-import movement;
+import movement_element;
 import unit;
 import game_map;
 import sound;
 import collision_element;
+import sector;
 
 std::unique_ptr<Forgette::Engine> global_engine = nullptr;
 
@@ -35,6 +36,23 @@ Player* Forgette::Engine::create_player()
 Forgette::Engine* get_engine()
 {
 	return global_engine.get();
+}
+
+GameMap* Forgette::Engine::get_map()
+{
+	return active_map.get();
+}
+
+void Forgette::Engine::add_unit_to_sector(coordinates<float> map_location, const ptr::keeper<Entity>& keeper)
+{
+	Sector* sector = active_map->get_sector(map_location);
+	sector->add_entity(keeper);
+}
+
+void Forgette::Engine::add_unit_to_sector(coordinates<float> map_location, std::int64_t entity_id)
+{
+	Sector* sector = active_map->get_sector(map_location);
+	sector->add_entity(entity_id);
 }
 
 void set_engine(Forgette::Engine* engine)
@@ -66,10 +84,12 @@ namespace Forgette
 		
 		input::map_key("primary", 0x0001, true);
 		input::map_key("secondary", 0x0002, true);
+		input::map_key("tertiary", 0x0020, true);
 		input::map_key("move_up", 0x0057, true);
 		input::map_key("move_right", 0x0044, true);
 		input::map_key("move_down", 0x0053, true);
 		input::map_key("move_left", 0x0041, true);
+		input::map_key("reload", 0x0052, true);
 		
 		Sound::initialize();
 		
@@ -103,7 +123,7 @@ namespace Forgette
 		
 		GameMap* new_map = new GameMap
 		(
-			coordinates<float>(256.0f, 128.0f), 
+			coordinates<float>(64.0f, 64.0f), 
 			"JAFM", 
 			coordinates<std::uint16_t>(50, 50)
 		);
@@ -137,8 +157,18 @@ namespace Forgette
 	
 	bool z_compare(const ptr::keeper<Entity> &a, const ptr::keeper<Entity> &b)
 	{
-	    Unit* unit1 = dynamic_cast<Unit*>(a.get());
-	    Unit* unit2 = dynamic_cast<Unit*>(b.get());
+		
+	    Unit* unit1 = nullptr;
+	    Unit* unit2 = nullptr;
+	    
+	    if (a.get()->is_entity(EntityClass::Unit))
+	    {
+	    	unit1 = static_cast<Unit*>(a.get());
+	    }
+	    if (b.get()->is_entity(EntityClass::Unit))
+	    {
+	    	unit2 = static_cast<Unit*>(b.get());
+	    }
 	
 	    // If either entity is not a unit, they should not affect the sorting.
 	    if (!unit1) return false;
@@ -162,10 +192,21 @@ namespace Forgette
 	
 	void handle_collision(CollisionElement& ce1, CollisionElement& ce2, float delta_time)
 	{
-		Unit& unit1 = *dynamic_cast<Unit*>(ce1.get_owner());
-		Unit& unit2 = *dynamic_cast<Unit*>(ce2.get_owner());
+		
+		if (!ce1.get_owner()->is_entity(EntityClass::Unit) || !ce2.get_owner()->is_entity(EntityClass::Unit))
+		{
+			return;
+		}
+		
+		Unit& unit1 = *static_cast<Unit*>(ce1.get_owner());
+		Unit& unit2 = *static_cast<Unit*>(ce2.get_owner());
 		
 		if (!ce1.collision_enabled || !ce2.collision_enabled)
+		{
+			return;
+		}
+		
+		if (unit1.z > ce2.height || unit2.z > ce1.height)
 		{
 			return;
 		}
@@ -210,10 +251,13 @@ namespace Forgette
 	        // Normalize the direction vector
 	        float nx = dx / distance;
 	        float ny = dy / distance;
-	
+			
+			MovementElement* unit1_movement = unit1.get_element<MovementElement>();
+			MovementElement* unit2_movement = unit2.get_element<MovementElement>();
+			
 	        // Calculate the total velocities along the collision normal
-	        float v1_dot_n = unit1.movement.velocity.x * nx + unit1.movement.velocity.y * ny;
-	        float v2_dot_n = unit2.movement.velocity.x * nx + unit2.movement.velocity.y * ny;
+	        float v1_dot_n = unit1_movement->velocity.x * nx + unit1_movement->velocity.y * ny;
+	        float v2_dot_n = unit2_movement->velocity.x * nx + unit2_movement->velocity.y * ny;
 	
 	        // Calculate how much to rewind each unit based on their velocities and delta_time
 	        float rewind_factor1 = v1_dot_n * delta_time;
@@ -225,13 +269,13 @@ namespace Forgette
 	        pos2.x -= rewind_factor2 * nx;
 	        pos2.y -= rewind_factor2 * ny;
 			
-			if (unit1.movement.velocity)
+			if (unit1_movement->velocity)
 			{
-				unit1.set_map_location(pos1);
+				unit1.set_map_location(pos1, true);
 			}
-	        if (unit2.movement.velocity)
+	        if (unit2_movement->velocity)
 	        {
-	        	unit2.set_map_location(pos2);
+	        	unit2.set_map_location(pos2, true);
 	        }
 	    }
 	}
@@ -246,6 +290,15 @@ namespace Forgette
 	{
 		if (!new_spawns.empty())
 		{
+			for (auto& entity : new_spawns)
+			{
+				if (entity.get()->is_entity(EntityClass::Unit))
+				{
+					Unit* unit = static_cast<Unit*>(entity.get());
+					add_unit_to_sector(unit->get_map_location(), entity);
+				}
+			}
+			
 			entities.insert(
 				entities.end(),
 				std::make_move_iterator(new_spawns.begin()),
@@ -253,19 +306,6 @@ namespace Forgette
 
 			new_spawns.clear();
 		}
-
-		for (auto it = entities.begin(); it != entities.end(); /* no increment here */) 
-		{
-	        if (it->get()->pending_deletion) 
-	        {
-	            it->~keeper();
-	            it = entities.erase(it);
-	        } 
-	        else 
-	        {
-	            ++it;
-	        }
-	    }
 	    
 		const float delta_time = timer_manager->get_delta_time();
 		
@@ -274,28 +314,31 @@ namespace Forgette
 			return;
 		}
 		
+		for (auto it = entities.begin(); it != entities.end(); /* no increment here */) 
+		{
+	        if (it->get()->pending_deletion) 
+	        {
+	        	if (it->get()->is_entity(EntityClass::Unit))
+	        	{
+	        		Unit* unit = static_cast<Unit*>(it->get());
+	        		if (unit->current_sector_info.sector)
+		        	{
+		        		unit->current_sector_info.sector->remove_entity(it->get());
+		        	}
+	        	}
+	        	
+	            it->~keeper();
+	            it = entities.erase(it);
+	        } 
+	        else 
+	        {
+	            ++it;
+	        }
+	    }
+		
 		active_map.get()->render_tiles();
 		
 		std::sort(entities.begin(), entities.end(), z_compare);
-		
-		for (auto& unit1 : entities)
-		{
-			if (CollisionElement* ce1 = unit1->get_element<CollisionElement>())
-			{
-				for (auto& unit2 : entities)
-				{
-					if (unit1.get() == unit2.get())
-					{
-						continue;
-					}
-					
-					if (CollisionElement* ce2 = unit2->get_element<CollisionElement>())
-					{
-						handle_collision(*ce1, *ce2, delta_time);
-					}
-				}
-			}
-		}
 		
 		for (auto& entity : entities)
 		{
@@ -311,6 +354,36 @@ namespace Forgette
 			else
 			{
 				// std::println("Did not run game update for {}", entity.get()->get_display_name());
+			}
+		}
+		
+		for (auto& entity : entities)
+		{
+			if (entity.get()->is_entity(EntityClass::Unit))
+			{
+				Unit* unit1 = static_cast<Unit*>(entity.get());
+				if (CollisionElement* ce1 = unit1->get_element<CollisionElement>())
+				{
+					std::vector<Sector*> near_sectors = active_map.get()->get_sector_grid(unit1->get_map_location(), 1);
+					for (auto& sector : near_sectors)
+					{
+						for (auto& entity2 : sector->entities)
+						{
+							if (!entity2.get()->is_entity(EntityClass::Unit))
+							{
+								continue;
+							}
+							Unit* unit2 = static_cast<Unit*>(entity2.get());
+							if (CollisionElement* ce2 = unit2->get_element<CollisionElement>())
+							{
+								if (unit1 != unit2)
+								{
+									handle_collision(*ce1, *ce2, delta_time);
+								}
+							}
+						}
+					}
+				}
 			}
 		}
 		

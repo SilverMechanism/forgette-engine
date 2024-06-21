@@ -7,6 +7,7 @@ import villager;
 import spirit;
 import player;
 import core;
+import sprite;
 
 void GameMode::start()
 {

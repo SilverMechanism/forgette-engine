@@ -5,7 +5,7 @@ export module debug_unit_scriptable;
 import core;
 import forgette;
 import debug_unit;
-
+import sprite;
 export
 {
 	class DebugUnit_SCRIPTABLE

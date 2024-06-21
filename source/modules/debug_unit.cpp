@@ -6,7 +6,7 @@ import core;
 import unit;
 import input;
 import std;
-import movement;
+import movement_element;
 import input_handler;
 import sprite_sheet;
 import directx;
@@ -38,7 +38,7 @@ export
 		
 		ptr::watcher<DebugDevice> debug_device;
 		
-		virtual void bind_inputs(std::vector<InputBinding> inputs) override;
+		virtual void bind_inputs() override;
 		
 		virtual void game_update(float delta_time) override;
 		
@@ -64,47 +64,13 @@ export
 
 DebugUnit::DebugUnit()
 {
+	add_entity_identifier(EntityClass::DebugUnit);
+	
 	display_name = "Debug Unit";
 	sprite_name = "waifu";
 	
 	should_game_update = true;
-	
-	// binds["primary"] = 		[this]() {std::cout << "Left mouse click!" << std::endl;};
-	// binds["secondary"] = 	[this]() {std::cout << "Right mouse click!" << std::endl;};
-	binds["move_up"] = 		[this]() 
-	{
-	this->movement.movement_input = this->movement.movement_input + coordinates<float>(0.0f, 1.0f);
-	};
-		
-	binds["move_right"] = 	[this]() 
-	{
-		this->movement.movement_input = this->movement.movement_input + coordinates<float>(1.0f, 0.0f);
-	};
-	
-	
-	binds["move_down"] = 	[this]() 
-	{
-		this->movement.movement_input = this->movement.movement_input + coordinates<float>(0.0f, -1.0f);
-	};
-	
-	binds["move_left"] = 	[this]() 
-	{
-		this->movement.movement_input = this->movement.movement_input + coordinates<float>(-1.0f, 0.0f);
-	};
-	
-	binds["primary"] =		[this]()
-	{
-		coordinates<float> target_location = get_map_location();
-		Target target = Target(nullptr, target_location);
-		this->debug_device->use(Command::Primary, this, target);
-	};
-	
-	binds["secondary"] =	[this]()
-	{
-		coordinates<float> target_location = get_map_location();
-		Target target = Target(nullptr, target_location);
-		this->debug_device->use(Command::Secondary, this, target);
-	};
+	add_element<MovementElement>();
 	
 	add_element<HealthElement>();
 	
@@ -114,6 +80,8 @@ DebugUnit::DebugUnit()
 	ce->collides_with.insert(CollisionGroup::Unit);
 	ce->collides_with.insert(CollisionGroup::Projectile);
 	ce->collides_with.insert(CollisionGroup::Prop);
+	
+	get_element<MovementElement>()->walk_speed = 72.0f;
 }
 
 void DebugUnit::game_update(float delta_time)
@@ -129,17 +97,79 @@ void DebugUnit::game_update(float delta_time)
 	
 	sprite_sheet->update_sprite_atlas(frame);
 	
-	set_map_location(movement.apply_velocity(get_map_location(), delta_time));
+	MovementElement* me = get_element<MovementElement>();
+	set_map_location(me->apply_velocity(get_map_location(), delta_time, z));
+	me->apply_gravity(z, delta_time);
 }
 
-void DebugUnit::bind_inputs(std::vector<InputBinding> inputs)
+void DebugUnit::bind_inputs()
 {
-	for (auto input : inputs)
+	std::function<void()> move_up = 		[this]() 
 	{
-		if (binds.find(input.name) != binds.end())
-		{
-			input::AddInputBinding(input.name, input.key_event, binds[input.name], input.priority);
-		}
+		MovementElement* movement_element = get_element<MovementElement>();
+		movement_element->movement_input = movement_element->movement_input + coordinates<float>(0.0f, 1.0f);
+	};
+		
+	std::function<void()> move_right = 	[this]() 
+	{
+		MovementElement* movement_element = get_element<MovementElement>();
+		movement_element->movement_input = movement_element->movement_input + coordinates<float>(1.0f, 0.0f);
+	};
+	
+	
+	std::function<void()> move_down = 	[this]() 
+	{
+		MovementElement* movement_element = get_element<MovementElement>();
+		movement_element->movement_input = movement_element->movement_input + coordinates<float>(0.0f, -1.0f);
+	};
+	
+	std::function<void()> move_left = 	[this]() 
+	{
+		MovementElement* movement_element = get_element<MovementElement>();
+		movement_element->movement_input = movement_element->movement_input + coordinates<float>(-1.0f, 0.0f);
+	};
+	
+	std::function<void()> primary =		[this]()
+	{
+		coordinates<float> target_location = get_map_location();
+		Target target = Target(nullptr, target_location);
+		this->debug_device->use(Command::Primary, this, target);
+	};
+	
+	std::function<void()> tertiary =	[this]()
+	{
+		coordinates<float> target_location = get_map_location();
+		Target target = Target(nullptr, target_location);
+		this->debug_device->use(Command::Tertiary, this, target);
+	};
+	
+	std::function<void()> tertiary_release =	[this]()
+	{
+		coordinates<float> target_location = get_map_location();
+		Target target = Target(nullptr, target_location);
+		this->debug_device->use(Command::StopTertiary, this, target);
+	};
+	
+	std::function<void()> reload =	[this]()
+	{
+		this->debug_device->reload(this);
+	};
+	
+	std::vector<InputBinding> binds =
+	{
+		{"move_up", input::KeyEventType::key_down, 0, move_up},
+		{"move_right", input::KeyEventType::key_down, 0, move_right},
+		{"move_down", input::KeyEventType::key_down, 0, move_down},
+		{"move_left", input::KeyEventType::key_down, 0, move_left},
+		{"primary", input::KeyEventType::key_down, 0, primary},
+		{"tertiary", input::KeyEventType::key_down, 0, tertiary},
+		{"tertiary", input::KeyEventType::key_up, 0, tertiary_release},
+		{"reload", input::KeyEventType::key_down, 0, reload}
+	};
+	
+	for (auto bind : binds)
+	{
+		input::AddInputBinding(bind);
 	}
 }
 
@@ -150,13 +180,15 @@ void DebugUnit::on_spawn()
 	sprite->draw_size = {96, 192};
 	
 	get_engine()->spawn_entity<DebugDevice>(debug_device);
+	get_engine()->get_entity(id, debug_device->owner, true);
+	debug_device->draw_ui = true;
 	
 	// Helpers::create_floating_text("Spawned...", 16.0f, get_map_location(), 2.0f, {0, 0}, RenderGroup::Debug, 0.0f);
 }
 
 void DebugUnit::set_sprite_direction()
 {
-    frame = to_sheet_frame(movement.velocity.isometric().normalize());
+    frame = to_sheet_frame(get_element<MovementElement>()->velocity.isometric().normalize());
 }
 
 void DebugUnit::set_sprite_direction_mouse()

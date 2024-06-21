@@ -28,7 +28,10 @@ export
 		public:
 			Engine();
 			~Engine();
-	
+			
+			void add_unit_to_sector(coordinates<float> map_location, const ptr::keeper<Entity>& keeper);
+			void add_unit_to_sector(coordinates<float> map_location, std::int64_t entity_id);
+			
 			TimerManager* timer_manager;
 	
 			void initialize_graphics(HINSTANCE hInstance, int nCmdShow);
@@ -41,6 +44,7 @@ export
 			bool healthy = true;
 	
 			std::vector<ptr::keeper<Entity>> entities;
+			
 			std::vector<ptr::keeper<Entity>> new_spawns;
 			
 			void update_render_viewpoint(coordinates<float> new_viewpoint);
@@ -58,6 +62,8 @@ export
 			LuaManager* get_lua_manager();
 			
 			Player* create_player();
+			
+			GameMap* get_map();
 	
 		private:
 			Mode active_mode = Mode::not_set;
@@ -78,8 +84,9 @@ export
 				
 				ptr::keeper<Entity> keeper = ptr::keeper<Entity>(spawn);
 				
-				if (Unit* unit = dynamic_cast<Unit*>(spawn))
+				if constexpr (std::is_base_of_v<Unit, T>)
 				{
+					Unit* unit = static_cast<Unit*>(spawn);
 					unit->set_map_location(world_location);
 				}
 				
@@ -98,8 +105,9 @@ export
 				ptr::keeper<Entity> keeper = ptr::keeper<Entity>(spawn);
 				new_watcher = ptr::watcher<T>(keeper);
 				
-				if (Unit* unit = dynamic_cast<Unit*>(spawn))
+				if constexpr (std::is_base_of_v<Unit, T>)
 				{
+					Unit* unit = static_cast<Unit*>(spawn);
 					unit->set_map_location(world_location);
 				}
 				
@@ -112,6 +120,8 @@ export
 			template<typename T>
 			void spawn_entity(ptr::watcher<T> &new_watcher)
 			{
+				static_assert(!std::is_base_of_v<Unit, T>, "T must not be derived from Unit");
+				
 				T* spawn = new T();
 				spawn->id = entity_counter;
 				
@@ -127,6 +137,8 @@ export
 			template<typename T>
 			void spawn_entity()
 			{
+				static_assert(!std::is_base_of_v<Unit, T>, "T must not be derived from Unit");
+				
 				T* spawn = new T();
 				spawn->id = entity_counter;
 				new_spawns.push_back(ptr::keeper<Entity>(spawn));
@@ -136,6 +148,34 @@ export
 				spawn->on_spawn();
 				entity_counter++;
 			}
+			
+			template<typename T>
+			void get_entity(std::int64_t id, ptr::watcher<T>& new_watcher, bool new_spawn=false)
+			{
+				if (!new_spawn)
+				{
+					for (const auto& entity : entities)
+					{
+						if (entity.get()->id == id)
+						{
+							new_watcher = ptr::watcher<T>(entity);
+							return;
+						}
+					}
+				}
+				else
+				{
+					for (const auto& entity : new_spawns)
+					{
+						if (entity.get()->id == id)
+						{
+							new_watcher = ptr::watcher<T>(entity);
+							return;
+						}
+					}
+				}
+			}
+			
 		};
 	}
 	

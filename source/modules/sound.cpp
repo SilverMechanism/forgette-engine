@@ -89,7 +89,17 @@ namespace Sound
 		    std::cerr << "FMOD Studio error loading Master.strings.bank! " << FMOD_ErrorString(result) << std::endl;
 		    return false;
 		}
+		
+		coordinates<float> resolution = ForgetteDirectX::get_resolution();
+		resolution = {resolution.x/2, resolution.y/2};
+		// Set the 3D listener attributes
+	    FMOD_3D_ATTRIBUTES listener_attributes = { 0 };
+	    listener_attributes.position = { resolution.x/100, resolution.y/100, 0.0f }; // Set listener position here
+	    listener_attributes.forward = { 0.0f, 0.0f, 1.0f }; // Forward vector
+	    listener_attributes.up = { 0.0f, -1.0f, 0.0f }; // Up vector
 
+		studioSystem->setListenerAttributes(0, &listener_attributes);
+		
 		return true;
 	}
 	

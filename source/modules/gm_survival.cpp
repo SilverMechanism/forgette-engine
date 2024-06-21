@@ -8,20 +8,26 @@ import spirit;
 import player;
 import core;
 import timers;
+import sprite;
+import game_map;
+import sector;
+import directx;
 
 void GM_Survival::spawn_wave()
 {
+	GameMap* game_map = get_engine()->get_map();
+	
 	TimerManager* timer_manager = TimerManager::Instance();
-	timer_manager->CreateTimer(3.0f, [this](int calls)
+	timer_manager->CreateTimer(1.0f, [this, game_map](int calls)
 	{ 
 		ptr::watcher<Villager> new_villager;
 		ptr::watcher<Spirit> new_spirit;
 		
-		get_engine()->spawn_entity<Villager>(coordinates<float>(0.0f, 0.0f).random_nearby(200.0f), new_villager);
+		get_engine()->spawn_entity<Villager>(coordinates<float>(0.0f, 0.0f).random_nearby(500.0f), new_villager);
 		get_engine()->spawn_entity<Spirit>(new_spirit);
 		
 		new_spirit->inhabit(ptr::watcher<Unit>(new_villager));
-	}, 10);
+	}, 20);
 }
 
 void GM_Survival::start()
@@ -33,14 +39,6 @@ void GM_Survival::start()
 	engine->spawn_entity<DebugUnit>(coordinates<float>(0, 0), debug_unit);
 	
 	new_player->possess_unit(ptr::watcher<Unit>(debug_unit));
-	
-	ptr::watcher<Villager> new_villager;
-	engine->spawn_entity<Villager>(coordinates(-100, -75), new_villager);
-	
-	ptr::watcher<Spirit> new_spirit;
-	engine->spawn_entity<Spirit>({0,0}, new_spirit);
-	
-	new_spirit->inhabit(ptr::watcher<Unit>(new_villager));
 	
 	spawn_wave();
 }

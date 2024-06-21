@@ -2,6 +2,7 @@ module;
 #include <windows.h>
 #include <assert.h>
 export module input;
+
 import windows;
 import std;
 import core;
@@ -40,6 +41,17 @@ export namespace input
 
 	int mouse_relative_x = 0;
 	int mouse_relative_y = 0;
+}
+
+export
+{
+	struct InputBinding
+	{
+		std::string name;
+		input::KeyEventType key_event = input::KeyEventType::key_down;
+		std::uint8_t priority = 0;
+		std::function<void()> input_function;
+	};
 }
 
 static input::ModifierKey ActiveModifierKey = input::ModifierKey::none;
@@ -149,6 +161,42 @@ export namespace input
 			else
 			{
 				input_binds[key].key_up_bindings.insert(input_binds[key].key_down_bindings.begin() + priority, function);
+			}
+		}
+		else
+		{
+			return false;
+		}
+
+		return true;
+	}
+	
+	bool AddInputBinding(InputBinding binding)
+	{
+		int key = key_bindings[binding.name];
+		
+		assert(key < 254); // Exceeds Windows virtual key codes
+
+		if (binding.key_event == KeyEventType::key_down)
+		{
+			if (input_binds[key].key_down_bindings.size() == 0 || binding.priority > input_binds[key].key_down_bindings.size())
+			{
+				input_binds[key].key_down_bindings.push_back(binding.input_function);
+			}
+			else
+			{
+				input_binds[key].key_down_bindings.insert(input_binds[key].key_down_bindings.begin() + binding.priority, binding.input_function);
+			}
+		}
+		else if (binding.key_event == KeyEventType::key_up)
+		{
+			if (input_binds[key].key_up_bindings.size() == 0 || binding.priority > input_binds[key].key_up_bindings.size())
+			{
+				input_binds[key].key_up_bindings.push_back(binding.input_function);
+			}
+			else
+			{
+				input_binds[key].key_up_bindings.insert(input_binds[key].key_down_bindings.begin() + binding.priority, binding.input_function);
 			}
 		}
 		else

@@ -19,5 +19,7 @@ export
 		std::function<void(Unit*)> on_collision;
 		
 		std::vector<std::int64_t> ignored_entities;
+		
+		float height = 72.0f;
 	};
 }

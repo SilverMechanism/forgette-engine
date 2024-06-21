@@ -101,6 +101,11 @@ wchar_t** argv = __wargv;
             show_cursor = true;
             break;
         }
+        if (wcscmp(argv[i], L"-sector_highlight") == 0)
+        {
+            DebugInfo::sector_highlight = true;
+            break;
+        }
     }
 	ShowCursor(show_cursor);
 	

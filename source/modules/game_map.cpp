@@ -22,12 +22,132 @@ std::map<GFX::RGB8, std::string> pixel_names = {
 	{GFX::RGB8(0, 0, 0), "road"}
 };
 
-GameMap::GameMap(coordinates<float> _sector_size, std::string _name, const coordinates<std::uint16_t> map_size_in_sectors) : 
+GameMap::GameMap(coordinates<float> _sector_size, std::string _name, const coordinates<std::uint16_t> map_size_in_sectors) :
 	sector_size(_sector_size),
 	name(_name),
-	map_size({static_cast<float>(map_size_in_sectors.x) * _sector_size.x, static_cast<float>(map_size_in_sectors.y) * _sector_size.y})
+	map_size({ static_cast<float>(map_size_in_sectors.x) * _sector_size.x, static_cast<float>(map_size_in_sectors.y) * _sector_size.y })
 {
-	Sector default_sector;
+	int half_map_size_x = map_size_in_sectors.x / 2;
+	int half_map_size_y = map_size_in_sectors.y / 2;
+
+	for (int i = -half_map_size_x; i < half_map_size_x; ++i)
+	{
+		for (int j = -half_map_size_y; j < half_map_size_y; ++j)
+		{
+			coordinates<float> sector_center = { ((i + 0.5f) * _sector_size.x), ((j + 0.5f) * _sector_size.y) };
+			sectors[sector_center] = Sector();
+		}
+	}
+}
+
+Sector* GameMap::get_sector(coordinates<float> map_location)
+{
+	// Is it a match?
+	auto iterator = sectors.find(map_location);
+	if (iterator != sectors.end())
+	{
+		return &iterator->second;
+	}
+
+	// Find nearest sector using the correct sector index calculation
+	int sector_index_x = static_cast<int>(std::floor(map_location.x / sector_size.x));
+	int sector_index_y = static_cast<int>(std::floor(map_location.y / sector_size.y));
+
+	coordinates<float> sector_location = { ((sector_index_x + 0.5f) * sector_size.x), ((sector_index_y + 0.5f) * sector_size.y) };
+
+	iterator = sectors.find(sector_location);
+	if (iterator != sectors.end())
+	{
+		return &iterator->second;
+	}
+	else
+	{
+		return nullptr;
+	}
+}
+
+SectorInfo GameMap::get_sector_info(coordinates<float> map_location)
+{
+	SectorInfo sector_info;
+	sector_info.size = sector_size;
+	
+	// Is it a match?
+	auto iterator = sectors.find(map_location);
+	if (iterator != sectors.end())
+	{
+		sector_info.center = map_location;
+		sector_info.sector = &iterator->second;
+		return sector_info;
+	}
+
+	// Find nearest sector using the correct sector index calculation
+	int sector_index_x = static_cast<int>(std::floor(map_location.x / sector_size.x));
+	int sector_index_y = static_cast<int>(std::floor(map_location.y / sector_size.y));
+
+	coordinates<float> sector_location = { ((sector_index_x + 0.5f) * sector_size.x), ((sector_index_y + 0.5f) * sector_size.y) };
+
+	iterator = sectors.find(sector_location);
+	if (iterator != sectors.end())
+	{
+		sector_info.center = sector_location;
+		sector_info.sector = &iterator->second;
+	}
+	
+	return sector_info;
+}
+
+std::vector<Sector*> GameMap::get_sector_grid(coordinates<float> map_location, int layer_size)
+{
+	std::vector<Sector*> sector_grid;
+
+	int sector_index_x = static_cast<int>(std::floor(map_location.x / sector_size.x));
+	int sector_index_y = static_cast<int>(std::floor(map_location.y / sector_size.y));
+
+	// Iterate over the grid based on the layer size
+	for (int dx = -layer_size; dx <= layer_size; ++dx)
+	{
+		for (int dy = -layer_size; dy <= layer_size; ++dy)
+		{
+			coordinates<float> sector_location = { ((sector_index_x + dx + 0.5f) * sector_size.x), ((sector_index_y + dy + 0.5f) * sector_size.y) };
+
+			Sector* sector = get_sector(sector_location);
+			if (sector != nullptr)
+			{
+				sector_grid.push_back(sector);
+			}
+		}
+	}
+
+	return sector_grid;
+}
+
+std::vector<SectorInfo> GameMap::get_sector_info_grid(coordinates<float> map_location, int layer_size)
+{
+	std::vector<SectorInfo> sector_grid;
+
+	int sector_index_x = static_cast<int>(std::floor(map_location.x / sector_size.x));
+	int sector_index_y = static_cast<int>(std::floor(map_location.y / sector_size.y));
+
+	// Iterate over the grid based on the layer size
+	for (int dx = -layer_size; dx <= layer_size; ++dx)
+	{
+		for (int dy = -layer_size; dy <= layer_size; ++dy)
+		{
+			coordinates<float> sector_location = { ((sector_index_x + dx + 0.5f) * sector_size.x), ((sector_index_y + dy + 0.5f) * sector_size.y) };
+
+			Sector* sector = get_sector(sector_location);
+			if (sector != nullptr)
+			{
+				SectorInfo sector_info;
+				sector_info.center = sector_location;
+				sector_info.size = sector_size;
+				sector_info.sector = sector;
+				sector_grid.push_back(sector_info);
+			}
+		}
+	}
+
+	return sector_grid;
 }
 
 GameMap::~GameMap()
@@ -54,12 +174,6 @@ std::string GameMap::get_name()
 coordinates<float> GameMap::get_extent()
 {
 	return {1.0f, 1.0f};
-	if (sectors.size() == 0)
-	{
-		return {0.0f, 0.0f};
-	}
-	
-	return {sector_size.x*static_cast<float>(sectors.size()), sector_size.y*static_cast<float>(sectors[0].size())};
 }
 
 coordinates<float> GameMap::get_sector_size()

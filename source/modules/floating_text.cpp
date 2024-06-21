@@ -6,6 +6,8 @@ import std;
 import core;
 import forgette;
 import unit;
+import movement_element;
+import sprite;
 
 void FloatingText::game_update(float delta_time)
 {
@@ -33,8 +35,12 @@ void FloatingText::render_update(RenderGroup rg)
 
 FloatingText::FloatingText()
 {
+	add_entity_identifier(EntityClass::FloatingText);
+	
 	display_name = "Floating Text";
 	should_game_update = true;
 	should_render_update = true;
 	render_group = RenderGroup::Debug;
+	
+	add_element<MovementElement>();
 }

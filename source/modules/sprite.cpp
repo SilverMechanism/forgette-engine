@@ -136,11 +136,6 @@ void Sprite::render_to_map(coordinates<float> map_location, bool force_render, f
 	
 	if (image.get())
 	{
-		if (z > 0.1f)
-		{
-			render_location = render_location.z_shift(z);
-		}
-		
 		if (atlas_size)
 		{
 			ForgetteDirectX::draw_sprite_to_map
@@ -149,7 +144,8 @@ void Sprite::render_to_map(coordinates<float> map_location, bool force_render, f
 				draw_size,
 				map_location,
 				atlas_location,
-				atlas_size
+				atlas_size,
+				z
 			);
 		}
 		else
@@ -158,7 +154,8 @@ void Sprite::render_to_map(coordinates<float> map_location, bool force_render, f
 			(
 				image.get(), 
 				draw_size, 
-				map_location
+				map_location,
+				z
 			);
 		}
 	}

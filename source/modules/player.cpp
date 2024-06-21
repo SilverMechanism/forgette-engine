@@ -8,6 +8,10 @@ import input_handler;
 import unit;
 import core;
 import health_element;
+import movement_element;
+import sprite;
+import game_map;
+import forgette;
 
 export
 {
@@ -43,10 +47,12 @@ Player::Player()
 	
 	input_bindings.push_back({"primary", input::KeyEventType::key_down, 0});
 	input_bindings.push_back({"secondary", input::KeyEventType::key_down, 0});
+	input_bindings.push_back({"tertiary", input::KeyEventType::key_down, 0});
 	input_bindings.push_back({"move_up", input::KeyEventType::key_down, 0});
 	input_bindings.push_back({"move_right", input::KeyEventType::key_down, 0});
 	input_bindings.push_back({"move_left", input::KeyEventType::key_down, 0});
 	input_bindings.push_back({"move_down", input::KeyEventType::key_down, 0});
+	input_bindings.push_back({"reload", input::KeyEventType::key_down, 0});
 }
 
 void Player::game_update(float delta_time)
@@ -86,6 +92,21 @@ void Player::render_update(RenderGroup rg)
 			}
 		}
 	}
+	
+	if (rg == RenderGroup::PreGame)
+	{
+		if (DebugInfo::sector_highlight)
+		{
+			if (controlled_unit.get())
+			{
+				std::vector<SectorInfo> sectors_info = get_engine()->get_map()->get_sector_info_grid(controlled_unit->get_map_location(), 1);
+				for (auto& sector_info : sectors_info)
+				{
+					ForgetteDirectX::draw_square({0.8f, 0.8f, 1.0f, 0.4f}, {sector_info.center.x-(sector_info.size.x/2), sector_info.center.y-(sector_info.size.y/2)}, (sector_info.size.y*5), true);
+				}
+			}
+		}
+	}
 }
 
 void Player::possess_unit(ptr::watcher<Unit> unit)
@@ -100,12 +121,12 @@ void Player::possess_unit(ptr::watcher<Unit> unit)
 	
 	if (InputHandler* ih = dynamic_cast<InputHandler*>(controlled_unit.get()))
 	{
-		ih->bind_inputs(input_bindings);
+		ih->bind_inputs();
 	}
 	
 	if (Unit* unit_unit = dynamic_cast<Unit*>(controlled_unit.get()))
 	{
-		unit_unit->movement.skew_input = true;
+		unit_unit->get_element<MovementElement>()->skew_input = true;
 	}
 }
 

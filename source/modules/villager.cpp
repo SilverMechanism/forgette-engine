@@ -7,6 +7,8 @@ import std;
 import debug_unit;
 import game_sound;
 import health_element;
+import movement_element;
+
 export
 {
 	class Villager : public DebugUnit
@@ -15,7 +17,7 @@ export
 		Villager();
 		~Villager();
 		
-		virtual void bind_inputs(std::vector<InputBinding> inputs) override;
+		virtual void bind_inputs() override;
 		
 		virtual void game_update(float delta_time) override;
 		
@@ -30,6 +32,7 @@ export
 
 Villager::Villager()
 {
+	add_entity_identifier(EntityClass::Unit);
 	
 	sprite_name = "chicken-beast";
 	display_name = "Villager";
@@ -41,10 +44,10 @@ Villager::Villager()
 	add_element<HealthElement>();
 	get_element<HealthElement>()->on_damage = [this](float amount) 
 	{ 
-		this->hurt_sound->play();
+		this->hurt_sound->play(get_map_location());
 	};
 	
-	movement.walk_speed = 32.0f;
+	get_element<MovementElement>()->walk_speed = 32.0f;
 }
 
 Villager::~Villager()
@@ -61,10 +64,10 @@ void Villager::game_update(float delta_time)
 	
 	sprite_sheet->update_sprite_atlas(frame);
 	
-	set_map_location(movement.apply_velocity(get_map_location(), delta_time));
+	set_map_location(get_element<MovementElement>()->apply_velocity(get_map_location(), delta_time));
 }
 
-void Villager::bind_inputs(std::vector<InputBinding> inputs)
+void Villager::bind_inputs()
 {
 	
 }
